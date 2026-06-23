@@ -361,18 +361,13 @@ class WasiyaView extends GetView<WasiyaController> {
                     ),
                     SizedBox(width: 4.w),
                   ],
-                  Text(
-                    title,
-                    style: GoogleFonts.getFont(
-                      'Noto Naskh Arabic',
-                      textStyle: TextStyle(
-                        color: isSelected ? Colors.white : text,
-                        fontSize: 12.sp,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                    ),
+                  TextApp(
+                    text: title,
+                    color: isSelected ? Colors.white : text,
+                    fontSize: 12.sp,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ],
               ),
@@ -427,27 +422,18 @@ class WasiyaView extends GetView<WasiyaController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'وصية الحاج إبراهيم المقيد (أبو خضر)',
-                  style: GoogleFonts.getFont(
-                    'Noto Naskh Arabic',
-                    textStyle: TextStyle(
-                      color: primary,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                TextApp(
+                  text: 'وصية الحاج إبراهيم المقيد (أبو خضر)',
+
+                  color: primary,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.bold,
                 ),
                 SizedBox(height: 2.h),
-                Text(
-                  'رحمه الله تعالى وجعل هذه الطاعة في ميزان حسناته',
-                  style: GoogleFonts.getFont(
-                    'Noto Naskh Arabic',
-                    textStyle: TextStyle(
-                      color: text.withValues(alpha: 0.5),
-                      fontSize: 9.5.sp,
-                    ),
-                  ),
+                TextApp(
+                  text: 'رحمه الله تعالى وجعل هذه الطاعة في ميزان حسناته',
+                  color: text.withValues(alpha: 0.5),
+                  fontSize: 9.5.sp,
                 ),
               ],
             ),
@@ -510,16 +496,11 @@ class WasiyaView extends GetView<WasiyaController> {
                   size: 28.r,
                 ),
                 SizedBox(height: 6.h),
-                Text(
-                  isDone ? 'تمت القراءة' : 'أتممت القراءة',
-                  style: GoogleFonts.getFont(
-                    'Noto Naskh Arabic',
-                    textStyle: TextStyle(
-                      color: isDone ? Colors.white : text,
-                      fontSize: 11.5.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                TextApp(
+                  text: isDone ? 'تمت القراءة' : 'أتممت القراءة',
+                  color: isDone ? Colors.white : text,
+                  fontSize: 11.5.sp,
+                  fontWeight: FontWeight.bold,
                 ),
               ],
             ),
@@ -665,16 +646,11 @@ class WasiyaView extends GetView<WasiyaController> {
                 children: [
                   Icon(Icons.stars, color: gold, size: 18.r),
                   SizedBox(width: 8.w),
-                  Text(
-                    'تقدم الوصية اليوم:',
-                    style: GoogleFonts.getFont(
-                      'Noto Naskh Arabic',
-                      textStyle: TextStyle(
-                        color: text,
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  TextApp(
+                    text: 'تقدم الوصية اليوم:',
+                    color: text,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.bold,
                   ),
                 ],
               ),
@@ -741,16 +717,11 @@ class WasiyaView extends GetView<WasiyaController> {
                     color: Colors.red.shade600,
                     size: 16.r,
                   ),
-                  label: Text(
-                    'إعادة البدء بالوصية',
-                    style: GoogleFonts.getFont(
-                      'Noto Naskh Arabic',
-                      textStyle: TextStyle(
-                        color: Colors.red.shade600,
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  label: TextApp(
+                    text: 'إعادة البدء بالوصية',
+                    color: Colors.red.shade600,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.bold,
                   ),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.red.shade200),
@@ -771,12 +742,11 @@ class WasiyaView extends GetView<WasiyaController> {
   void _showResetDialog() {
     Get.defaultDialog(
       title: 'إعادة ضبط الوصية',
-      titleStyle: GoogleFonts.getFont(
-        'Noto Naskh Arabic',
-        textStyle: const TextStyle(fontWeight: FontWeight.bold),
+      titleStyle: TextApp.style(
+        fontWeight: FontWeight.bold,
       ),
       middleText: 'هل تريد تصفير كل الخطوات والعدادات للبدء من جديد اليوم؟',
-      middleTextStyle: GoogleFonts.getFont('Noto Naskh Arabic'),
+      middleTextStyle: TextApp.style(),
       backgroundColor: Colors.white,
       radius: 16.r,
       textConfirm: 'نعم، إعادة ضبط',
@@ -814,16 +784,11 @@ class WasiyaView extends GetView<WasiyaController> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'تقبل الله طاعتك وغفر ذنبك ✨',
-              style: GoogleFonts.getFont(
-                'Noto Naskh Arabic',
-                textStyle: TextStyle(
-                  color: primary,
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            TextApp(
+              text: 'تقبل الله طاعتك وغفر ذنبك ✨',
+              color: primary,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
             ),
             SizedBox(height: 12.h),
             SizedBox(
@@ -839,15 +804,10 @@ class WasiyaView extends GetView<WasiyaController> {
                   ),
                   elevation: 0,
                 ),
-                child: Text(
-                  'العودة للرئيسية',
-                  style: GoogleFonts.getFont(
-                    'Noto Naskh Arabic',
-                    textStyle: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                child: TextApp(
+                  text: 'العودة للرئيسية',
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),

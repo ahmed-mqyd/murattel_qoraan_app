@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:murattel_qoraan_app/core/text_app/text_app.dart';
 import 'package:murattel_qoraan_app/core/theme/app_theme.dart';
 import '../controller/tasbeeh_controller.dart';
 
@@ -37,17 +38,13 @@ class TasbeehView extends GetView<TasbeehController> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: Text(
-          'المسبحة الإلكترونية',
-          style: GoogleFonts.getFont(
-            'Noto Naskh Arabic',
-            textStyle: TextStyle(
-              color: primaryColor,
-              fontSize: 20.sp,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        title: TextApp(
+          text: 'المسبحة الإلكترونية',
+          color: primaryColor,
+          fontSize: 20.sp,
+          fontWeight: FontWeight.bold,
         ),
+
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, color: primaryColor),
           onPressed: () => Get.back(),
@@ -97,16 +94,11 @@ class TasbeehView extends GetView<TasbeehController> {
                           width: 1.w,
                         ),
                       ),
-                      child: Text(
-                        'الدورات: ${_toArabicNumbers(controller.cycleCount.value.toString())}',
-                        style: GoogleFonts.getFont(
-                          'Noto Naskh Arabic',
-                          textStyle: TextStyle(
-                            color: goldColor,
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      child: TextApp(
+                        text: 'الدورات: ${_toArabicNumbers(controller.cycleCount.value.toString())}',
+                        color: goldColor,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
                       ),
                     );
                   }),
@@ -179,18 +171,13 @@ class TasbeehView extends GetView<TasbeehController> {
                   ),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  zikr.text,
-                  style: GoogleFonts.getFont(
-                    'Noto Naskh Arabic',
-                    textStyle: TextStyle(
-                      color: isSelected ? Colors.white : text,
-                      fontSize: 13.sp,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
+                child: TextApp(
+                  text: zikr.text,
+                  color: isSelected ? Colors.white : text,
+                  fontSize: 13.sp,
+                  fontWeight: isSelected
+                      ? FontWeight.bold
+                      : FontWeight.normal,
                 ),
               ),
             );
@@ -212,16 +199,11 @@ class TasbeehView extends GetView<TasbeehController> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'تحديد الهدف اليومي:',
-            style: GoogleFonts.getFont(
-              'Noto Naskh Arabic',
-              textStyle: TextStyle(
-                color: text.withValues(alpha: 0.7),
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+          TextApp(
+            text: 'تحديد الهدف اليومي:',
+            color: text.withValues(alpha: 0.7),
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w500,
           ),
           Row(
             children: controller.targetOptions.map((target) {
@@ -250,18 +232,13 @@ class TasbeehView extends GetView<TasbeehController> {
                         width: 1.w,
                       ),
                     ),
-                    child: Text(
-                      label,
-                      style: GoogleFonts.getFont(
-                        'Noto Naskh Arabic',
-                        textStyle: TextStyle(
-                          color: isSelected ? Colors.white : text,
-                          fontSize: 12.sp,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                      ),
+                    child: TextApp(
+                      text: label,
+                      color: isSelected ? Colors.white : text,
+                      fontSize: 12.sp,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                 );
@@ -433,16 +410,11 @@ class TasbeehView extends GetView<TasbeehController> {
                   children: [
                     Icon(Icons.stars, color: gold, size: 20.r),
                     SizedBox(width: 8.w),
-                    Text(
-                      'مجموع التسبيحات اليوم:',
-                      style: GoogleFonts.getFont(
-                        'Noto Naskh Arabic',
-                        textStyle: TextStyle(
-                          color: text,
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    TextApp(
+                      text: 'مجموع التسبيحات اليوم:',
+                      color: text,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.bold,
                     ),
                   ],
                 ),
@@ -495,16 +467,11 @@ class TasbeehView extends GetView<TasbeehController> {
                     color: Colors.red.shade600,
                     size: 18.r,
                   ),
-                  label: Text(
-                    'إعادة ضبط',
-                    style: GoogleFonts.getFont(
-                      'Noto Naskh Arabic',
-                      textStyle: TextStyle(
-                        color: Colors.red.shade600,
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  label: TextApp(
+                    text: 'إعادة ضبط',
+                    color: Colors.red.shade600,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.bold,
                   ),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.red.shade200),
@@ -525,12 +492,11 @@ class TasbeehView extends GetView<TasbeehController> {
   void _showResetDialog() {
     Get.defaultDialog(
       title: 'إعادة تعيين العداد',
-      titleStyle: GoogleFonts.getFont(
-        'Noto Naskh Arabic',
-        textStyle: const TextStyle(fontWeight: FontWeight.bold),
+      titleStyle: TextApp.style(
+        fontWeight: FontWeight.bold,
       ),
       middleText: 'هل تريد تصفير العداد الحالي أم إعادة تعيين كل البيانات؟',
-      middleTextStyle: GoogleFonts.getFont('Noto Naskh Arabic'),
+      middleTextStyle: TextApp.style(),
       backgroundColor: Colors.white,
       radius: 16.r,
       textConfirm: 'تصفير العداد',

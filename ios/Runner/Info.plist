@@ -70,5 +70,13 @@
 	<string>يحتاج التطبيق إلى الوصول لموقعك الحالي لحساب اتجاه القبلة والمسافة الدقيقة إلى الكعبة المشرفة.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>يحتاج التطبيق إلى الوصول لموقعك الحالي لحساب اتجاه القبلة والمسافة الدقيقة إلى الكعبة المشرفة.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>يحتاج التطبيق للوصول إلى الميكروفون لتسجيل وتسميع الآيات القرآنية وتقييمها بالذكاء الاصطناعي.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>يحتاج التطبيق للوصول إلى التعرف على الكلام لتسجيل وتسميع الآيات القرآنية وتقييمها بالذكاء الاصطناعي.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 </dict>
 </plist>

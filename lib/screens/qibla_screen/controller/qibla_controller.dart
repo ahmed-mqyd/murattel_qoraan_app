@@ -15,6 +15,7 @@ class QiblaController extends GetxController {
   final isLoadingLocation = false.obs;
   final gpsCoords = ''.obs;
   final hasRealCompassSensor = false.obs;
+  final sensorAccuracy = 0.0.obs;
 
   // Coordinates of Kaaba
   final double kaabaLat = 21.422487;
@@ -22,6 +23,10 @@ class QiblaController extends GetxController {
 
   final List<Map<String, dynamic>> cities = [
     {'key': 'jerusalem', 'lat': 31.768319, 'lng': 35.21371},
+    {'key': 'gaza', 'lat': 31.508493, 'lng': 34.466844},
+    {'key': 'cairo', 'lat': 30.044420, 'lng': 31.235712},
+    {'key': 'madinah', 'lat': 24.467210, 'lng': 39.611172},
+    {'key': 'riyadh', 'lat': 24.713552, 'lng': 46.675296},
     {'key': 'mecca', 'lat': 21.422487, 'lng': 39.826206},
     {'key': 'gpsCurrentLocation', 'lat': 0.0, 'lng': 0.0},
   ];
@@ -54,6 +59,9 @@ class QiblaController extends GetxController {
         hasRealCompassSensor.value = true;
         _fluctuationTimer?.cancel();
         updateHeading(event.heading!);
+        if (event.accuracy != null) {
+          sensorAccuracy.value = event.accuracy!;
+        }
       }
     });
   }
@@ -240,6 +248,42 @@ class QiblaController extends GetxController {
       HapticFeedback.mediumImpact();
     }
     isAligned.value = aligned;
+  }
+
+  String getCardinalDirectionName(double angle) {
+    angle = (angle + 360) % 360;
+    if (angle >= 337.5 || angle < 22.5) {
+      return 'شمالاً';
+    } else if (angle >= 22.5 && angle < 67.5) {
+      return 'شمالاً شرقاً';
+    } else if (angle >= 67.5 && angle < 112.5) {
+      return 'شرقاً';
+    } else if (angle >= 112.5 && angle < 157.5) {
+      return 'جنوباً شرقاً';
+    } else if (angle >= 157.5 && angle < 202.5) {
+      return 'جنوباً';
+    } else if (angle >= 202.5 && angle < 247.5) {
+      return 'جنوباً غرباً';
+    } else if (angle >= 247.5 && angle < 292.5) {
+      return 'غرباً';
+    } else {
+      return 'شمالاً غرباً';
+    }
+  }
+
+  String getTurnInstruction() {
+    if (isAligned.value) {
+      return 'متحاذي تماماً مع القبلة (باتجاه الكعبة المشرفة)';
+    }
+    double diff = qiblaAngle.value - currentHeading.value;
+    diff = (diff + 180) % 360 - 180;
+    
+    final int degrees = diff.abs().round();
+    if (diff > 0) {
+      return 'أدر الهاتف ${toArabicNumbers(degrees.toString())}° يميناً';
+    } else {
+      return 'أدر الهاتف ${toArabicNumbers(degrees.toString())}° يساراً';
+    }
   }
 
   // Format helper to translate numbers into Arabic representation

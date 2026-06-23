@@ -4,8 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:murattel_qoraan_app/core/images/images_const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:murattel_qoraan_app/screens/settings_screen/controller/settings_controller.dart';
+import 'package:murattel_qoraan_app/core/controllers/audio_controller.dart';
 
 class HomeController extends GetxController {
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -172,12 +173,16 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
 
-    _audioPlayer.onPlayerStateChanged.listen((state) {
-      isPlaying.value = state == PlayerState.playing;
-    });
+    _audioPlayer.playerStateStream.listen((state) {
+      isPlaying.value = state.playing;
+      
+      final processingState = state.processingState;
+      isAudioLoading.value = processingState == ProcessingState.loading ||
+                           processingState == ProcessingState.buffering;
 
-    _audioPlayer.onPlayerComplete.listen((event) {
-      isPlaying.value = false;
+      if (processingState == ProcessingState.completed) {
+        isPlaying.value = false;
+      }
     });
 
     _moonTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
@@ -378,7 +383,6 @@ class HomeController extends GetxController {
   Future<void> togglePlay() async {
     if (isPlaying.value) {
       await _audioPlayer.pause();
-      isPlaying.value = false;
       return;
     }
 
@@ -398,19 +402,28 @@ class HomeController extends GetxController {
       case 'ghamdi':
         reciterId = 'ar.saadghamidi';
         break;
+      case 'faresabbad':
+        reciterId = 'Fares_Abbad_64kbps';
+        break;
+      case 'yasser':
+        reciterId = 'Yasser_Ad-Dussary_128kbps';
+        break;
       case 'alafasy':
       default:
         reciterId = 'ar.alafasy';
         break;
     }
 
-    final urlString =
-        'https://cdn.alquran.cloud/media/audio/ayah/$reciterId/${dailyAyahGlobalNumber.value}';
+    final urlString = AudioController.getAudioUrl(
+      reciterId,
+      dailyAyahSurahId.value,
+      dailyAyahNumber.value,
+      dailyAyahGlobalNumber.value,
+    );
 
     try {
-      await _audioPlayer.stop();
-      await _audioPlayer.play(UrlSource(urlString));
-      isPlaying.value = true;
+      await _audioPlayer.setUrl(urlString);
+      _audioPlayer.play();
     } catch (e) {
       isAudioLoading.value = false;
       isPlaying.value = false;

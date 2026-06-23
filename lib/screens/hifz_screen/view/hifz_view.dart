@@ -89,6 +89,19 @@ class HifzView extends GetView<HifzController> {
                   ),
                   SizedBox(height: 32.h),
 
+                  // 1.5. Text transcription card (what the app heard)
+                  _buildTranscriptionCard(
+                    controller.transcription.value,
+                    cardBackgroundColor,
+                    outlineColor,
+                    primaryColor,
+                    goldColor,
+                    textColor,
+                    isDark,
+                  ),
+                  if (controller.transcription.value.isNotEmpty)
+                    SizedBox(height: 20.h),
+
                   // 2. Transcription evaluation card
                   _buildEvaluationCard(
                     controller.surahName.value,
@@ -264,6 +277,55 @@ class HifzView extends GetView<HifzController> {
                   ),
                 ),
               ),
+              Obx(() {
+                if (!controller.isRecording.value || controller.liveText.value.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Container(
+                  margin: EdgeInsets.only(top: 24.h),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF00150F) : const Color(0xFFF7F5F0),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                      color: goldColor.withValues(alpha: 0.25),
+                      width: 1.w,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.record_voice_over, color: Colors.red, size: 16),
+                          SizedBox(width: 6.w),
+                          TextApp(
+                            text: 'يتلو القارئ الآن:',
+                            color: goldColor,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        controller.liveText.value,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.amiri(
+                          textStyle: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                            height: 1.6,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
             ],
           ),
         ),
@@ -393,13 +455,17 @@ class HifzView extends GetView<HifzController> {
                   ),
                 ),
                 children: words.map((word) {
+                  final String wordText = word.text;
+                  final String displayText = wordText.endsWith(' ') ? wordText : '$wordText ';
+                  
                   if (word.isCorrect) {
-                    return TextSpan(text: word.text);
+                    return TextSpan(text: displayText);
                   } else {
                     return WidgetSpan(
                       alignment: PlaceholderAlignment.middle,
                       child: Container(
                         padding: EdgeInsets.symmetric(horizontal: 4.w),
+                        margin: EdgeInsets.symmetric(horizontal: 4.w),
                         decoration: BoxDecoration(
                           color: errorColor.withValues(alpha: 0.1),
                           border: Border(
@@ -407,7 +473,7 @@ class HifzView extends GetView<HifzController> {
                           ),
                         ),
                         child: Text(
-                          word.text,
+                          wordText.trim(),
                           style: GoogleFonts.amiri(
                             textStyle: TextStyle(
                               color: errorColor,
@@ -524,6 +590,7 @@ class HifzView extends GetView<HifzController> {
             child: ElevatedButton(
               onPressed: () {
                 HapticFeedback.lightImpact();
+                controller.nextAyahRange();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: goldColor,
@@ -687,5 +754,59 @@ class HifzView extends GetView<HifzController> {
       result = result.replaceAll(english[i], arabic[i]);
     }
     return result;
+  }
+
+  Widget _buildTranscriptionCard(
+    String text,
+    Color cardBg,
+    Color outlineColor,
+    Color primaryColor,
+    Color goldColor,
+    Color textColor,
+    bool isDark,
+  ) {
+    if (text.isEmpty) return const SizedBox.shrink();
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: outlineColor, width: 1.w),
+        boxShadow: AppTheme.shadowSm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.mic, color: goldColor, size: 20.r),
+              SizedBox(width: 8.w),
+              TextApp(
+                text: 'النص المسموع (تسميعك المكتوب)',
+                color: goldColor,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.bold,
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Directionality(
+            textDirection: TextDirection.rtl,
+            child: Text(
+              text,
+              textAlign: TextAlign.right,
+              style: GoogleFonts.amiri(
+                textStyle: TextStyle(
+                  color: isDark ? Colors.white.withValues(alpha: 0.9) : textColor.withValues(alpha: 0.85),
+                  fontSize: 20.sp,
+                  height: 1.8,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:murattel_qoraan_app/core/text_app/text_app.dart';
 import 'package:murattel_qoraan_app/core/theme/app_theme.dart';
 import '../controller/qibla_controller.dart';
 
@@ -57,16 +58,11 @@ class QiblaView extends GetView<QiblaController> {
             },
           ),
         ),
-        title: Text(
-          'القبلة',
-          style: GoogleFonts.getFont(
-            'Noto Naskh Arabic',
-            textStyle: TextStyle(
-              color: primaryColor,
-              fontSize: 20.sp,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        title: TextApp(
+          text: 'القبلة',
+          color: primaryColor,
+          fontSize: 20.sp,
+          fontWeight: FontWeight.bold,
         ),
       ),
       body: SafeArea(
@@ -125,6 +121,16 @@ class QiblaView extends GetView<QiblaController> {
                     ),
                     SizedBox(height: 24.h),
 
+                    // 4.5. Qibla Calibration Card
+                    _buildCalibrationCard(
+                      cardBackgroundColor,
+                      outlineColor,
+                      textColor,
+                      goldColor,
+                      isDark,
+                    ),
+                    SizedBox(height: 24.h),
+
                     // 5. Simulated Auto-rotate (demo purposes)
                     ElevatedButton.icon(
                       onPressed: () {
@@ -151,16 +157,12 @@ class QiblaView extends GetView<QiblaController> {
                             : Icons.play_arrow_rounded,
                         size: 18.r,
                       ),
-                      label: Text(controller.autoRotate.value
+                      label: TextApp(
+                        text: controller.autoRotate.value
                             ? 'إيقاف المحاكاة'
                             : 'بدء المحاكاة',
-                        style: GoogleFonts.getFont(
-                          'Noto Naskh Arabic',
-                          textStyle: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     SizedBox(height: 16.h),
@@ -188,16 +190,12 @@ class QiblaView extends GetView<QiblaController> {
                         children: [
                           CircularProgressIndicator(color: goldColor),
                           SizedBox(height: 16.h),
-                          Text('جاري تحديد موقعك عبر GPS...',
+                          TextApp(
+                            text: 'جاري تحديد موقعك عبر GPS...',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.getFont(
-                              'Noto Naskh Arabic',
-                              textStyle: TextStyle(
-                                color: textColor,
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            color: textColor,
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.bold,
                           ),
                         ],
                       ),
@@ -234,14 +232,10 @@ class QiblaView extends GetView<QiblaController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('المدينة الحالية',
-                  style: GoogleFonts.getFont(
-                    'Noto Naskh Arabic',
-                    textStyle: TextStyle(
-                      color: textColor.withValues(alpha: 0.6),
-                      fontSize: 11.sp,
-                    ),
-                  ),
+                TextApp(
+                  text: 'المدينة الحالية',
+                  color: textColor.withValues(alpha: 0.6),
+                  fontSize: 11.sp,
                 ),
                 SizedBox(height: 4.h),
                 Obx(() {
@@ -250,15 +244,11 @@ class QiblaView extends GetView<QiblaController> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_getCityName(cityKey),
-                        style: GoogleFonts.getFont(
-                          'Noto Naskh Arabic',
-                          textStyle: TextStyle(
-                            color: textColor,
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      TextApp(
+                        text: _getCityName(cityKey),
+                        color: textColor,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
                       ),
                       if (coords.isNotEmpty) ...[
                         SizedBox(height: 2.h),
@@ -302,14 +292,10 @@ class QiblaView extends GetView<QiblaController> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('تغيير الموقع',
-                  style: GoogleFonts.getFont(
-                    'Noto Naskh Arabic',
-                    textStyle: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                TextApp(
+                  text: 'تغيير الموقع',
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.bold,
                 ),
                 SizedBox(width: 4.w),
                 Icon(Icons.location_on_rounded, size: 14.r),
@@ -351,22 +337,16 @@ class QiblaView extends GetView<QiblaController> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            aligned ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+            aligned ? Icons.check_circle_rounded : Icons.explore_rounded,
             color: textCol,
             size: 20.r,
           ),
           SizedBox(width: 8.w),
-          Text(aligned
-                ? 'متحاذي مع القبلة'
-                : 'أدر الهاتف باتجاه الكعبة',
-            style: GoogleFonts.getFont(
-              'Noto Naskh Arabic',
-              textStyle: TextStyle(
-                color: textCol,
-                fontSize: 13.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+          TextApp(
+            text: controller.getTurnInstruction(),
+            color: textCol,
+            fontSize: 13.sp,
+            fontWeight: FontWeight.bold,
           ),
         ],
       ),
@@ -389,7 +369,6 @@ class QiblaView extends GetView<QiblaController> {
 
       return GestureDetector(
         onPanUpdate: (details) {
-          // Allow manual orientation dragging to simulate phone rotation
           final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
           if (renderBox != null) {
             final Offset localPos = renderBox.globalToLocal(
@@ -401,27 +380,26 @@ class QiblaView extends GetView<QiblaController> {
             final double dy = localPos.dy - centerY;
             final double angleRad = atan2(dy, dx);
             double angleDeg = angleRad * 180 / pi;
-            // Map 0 to top (North) instead of East (right)
             double heading = (angleDeg + 90 + 360) % 360;
             controller.updateHeading(heading);
           }
         },
         child: Container(
-          width: 280.w,
-          height: 280.w,
+          width: 300.w,
+          height: 300.w,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: cardBg,
+            color: cardBg.withValues(alpha: 0.85),
             border: Border.all(
               color: aligned ? const Color(0xFF10B981) : outlineColor,
-              width: aligned ? 3.w : 1.w,
+              width: aligned ? 4.w : 1.w,
             ),
             boxShadow: [
               BoxShadow(
                 color: aligned
-                    ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                    : Colors.black.withValues(alpha: isDark ? 0.4 : 0.05),
-                blurRadius: 20.r,
+                    ? const Color(0xFF10B981).withValues(alpha: 0.25)
+                    : Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+                blurRadius: 24.r,
                 spreadRadius: 2.r,
               ),
             ],
@@ -429,64 +407,40 @@ class QiblaView extends GetView<QiblaController> {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // 1. Compass dial degree lines (Rotates based on heading)
               Transform.rotate(
                 angle: -heading * pi / 180,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Dial markings
-                    ...List.generate(12, (index) {
-                      final double deg = index * 30.0;
+                    ...List.generate(36, (index) {
+                      final double deg = index * 10.0;
                       final bool isCardinal = deg % 90 == 0;
+                      final bool isSubCardinal = deg % 30 == 0 && !isCardinal;
                       return Transform.rotate(
                         angle: deg * pi / 180,
                         child: Align(
                           alignment: Alignment.topCenter,
                           child: Container(
-                            margin: EdgeInsets.only(top: 8.h),
-                            width: isCardinal ? 3.w : 1.w,
-                            height: isCardinal ? 12.h : 8.h,
+                            margin: EdgeInsets.only(top: 10.h),
+                            width: isCardinal ? 3.w : (isSubCardinal ? 2.w : 1.w),
+                            height: isCardinal ? 14.h : (isSubCardinal ? 10.h : 6.h),
                             color: isCardinal
                                 ? goldColor
-                                : textColor.withValues(alpha: 0.3),
+                                : (isSubCardinal ? textColor.withValues(alpha: 0.5) : textColor.withValues(alpha: 0.25)),
                           ),
                         ),
                       );
                     }),
-                    // Cardinal labels (Arabic/English cardinal values)
-                    _buildCardinalLabel(
-                      0,
-                      'شمال',
-                      textColor,
-                      goldColor,
-                    ),
-                    _buildCardinalLabel(
-                      90,
-                      'شرق',
-                      textColor,
-                      goldColor,
-                    ),
-                    _buildCardinalLabel(
-                      180,
-                      'جنوب',
-                      textColor,
-                      goldColor,
-                    ),
-                    _buildCardinalLabel(
-                      270,
-                      'غرب',
-                      textColor,
-                      goldColor,
-                    ),
-
-                    // 2. Kaaba Icon placed exactly at the Qibla angle relative to the dial
+                    _buildCardinalLabel(0, 'شمال', textColor, goldColor),
+                    _buildCardinalLabel(90, 'شرق', textColor, goldColor),
+                    _buildCardinalLabel(180, 'جنوب', textColor, goldColor),
+                    _buildCardinalLabel(270, 'غرب', textColor, goldColor),
                     Transform.rotate(
                       angle: qibla * pi / 180,
                       child: Align(
                         alignment: Alignment.topCenter,
                         child: Container(
-                          margin: EdgeInsets.only(top: 24.h),
+                          margin: EdgeInsets.only(top: 26.h),
                           padding: EdgeInsets.all(6.w),
                           decoration: BoxDecoration(
                             color: goldColor,
@@ -495,14 +449,14 @@ class QiblaView extends GetView<QiblaController> {
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.3),
-                                blurRadius: 4.r,
+                                blurRadius: 6.r,
                               ),
                             ],
                           ),
                           child: Icon(
                             Icons.mosque_rounded,
                             color: const Color(0xFF003527),
-                            size: 20.r,
+                            size: 16.r,
                           ),
                         ),
                       ),
@@ -510,8 +464,48 @@ class QiblaView extends GetView<QiblaController> {
                   ],
                 ),
               ),
-
-              // 3. Central Phone pointer (Stays static pointing straight up, representing phone heading)
+              Transform.rotate(
+                angle: (qibla - heading) * pi / 180,
+                child: SizedBox(
+                  width: 200.w,
+                  height: 200.w,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Align(
+                        alignment: Alignment.topCenter,
+                        child: Container(
+                          margin: EdgeInsets.only(top: 28.h),
+                          width: 4.w,
+                          height: 72.h,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFC5A059), Color(0xFFF9E8A2)],
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                            ),
+                            borderRadius: BorderRadius.circular(2.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFC5A059).withValues(alpha: 0.4),
+                                blurRadius: 4.r,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 14.h,
+                        child: Icon(
+                          Icons.navigation_rounded,
+                          color: const Color(0xFFC5A059),
+                          size: 24.r,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               Align(
                 alignment: Alignment.topCenter,
                 child: Padding(
@@ -523,44 +517,40 @@ class QiblaView extends GetView<QiblaController> {
                   ),
                 ),
               ),
-
-              // 4. Center readout hub
               Container(
-                width: 100.w,
-                height: 100.w,
+                width: 96.w,
+                height: 96.w,
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF02160F)
-                      : const Color(0xFFF9F8F5),
+                      ? const Color(0xFF02160F).withValues(alpha: 0.9)
+                      : const Color(0xFFFDFBF7).withValues(alpha: 0.9),
                   shape: BoxShape.circle,
-                  border: Border.all(color: outlineColor, width: 2.w),
+                  border: Border.all(
+                    color: aligned ? const Color(0xFF10B981) : outlineColor,
+                    width: 2.w,
+                  ),
                   boxShadow: AppTheme.shadowSm,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('${controller.toArabicNumbers(heading.toStringAsFixed(0))}°',
+                    Text(
+                      '${controller.toArabicNumbers(heading.toStringAsFixed(0))}°',
                       style: GoogleFonts.getFont(
                         'Outfit',
                         textStyle: TextStyle(
                           color: aligned ? const Color(0xFF10B981) : textColor,
-                          fontSize: 24.sp,
+                          fontSize: 22.sp,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    Text(aligned
-                          ? 'جاهز'
-                          : 'غير دقيق',
-                      style: GoogleFonts.getFont(
-                        'Noto Naskh Arabic',
-                        textStyle: TextStyle(
-                          color: aligned
-                              ? const Color(0xFF10B981)
-                              : textColor.withValues(alpha: 0.5),
-                          fontSize: 10.sp,
-                        ),
-                      ),
+                    TextApp(
+                      text: aligned ? 'متحاذي' : 'أدر الهاتف',
+                      color: aligned
+                          ? const Color(0xFF10B981)
+                          : textColor.withValues(alpha: 0.5),
+                      fontSize: 9.sp,
                     ),
                   ],
                 ),
@@ -583,18 +573,14 @@ class QiblaView extends GetView<QiblaController> {
       child: Align(
         alignment: Alignment.topCenter,
         child: Padding(
-          padding: EdgeInsets.only(top: 22.h),
-          child: Text(text,
-            style: GoogleFonts.getFont(
-              'Noto Naskh Arabic',
-              textStyle: TextStyle(
-                color: angle == 0
-                    ? goldColor
-                    : textColor.withValues(alpha: 0.6),
-                fontSize: 12.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+          padding: EdgeInsets.only(top: 26.h),
+          child: TextApp(
+            text: text,
+            color: angle == 0
+                ? goldColor
+                : textColor.withValues(alpha: 0.6),
+            fontSize: 11.sp,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
@@ -620,7 +606,9 @@ class QiblaView extends GetView<QiblaController> {
       ),
       child: Obx(() {
         final double qibla = controller.qiblaAngle.value;
-        final String angleStr = '${controller.toArabicNumbers(qibla.toStringAsFixed(0))}° شمالاً شرقاً';
+        final String directionName = controller.getCardinalDirectionName(qibla);
+        final String angleStr =
+            '${controller.toArabicNumbers(qibla.toStringAsFixed(0))}° $directionName';
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -629,15 +617,11 @@ class QiblaView extends GetView<QiblaController> {
               children: [
                 Icon(Icons.explore, color: goldColor, size: 20.r),
                 SizedBox(width: 8.w),
-                Text('تفاصيل القبلة',
-                  style: GoogleFonts.getFont(
-                    'Noto Naskh Arabic',
-                    textStyle: TextStyle(
-                      color: textColor,
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                TextApp(
+                  text: 'تفاصيل القبلة',
+                  color: textColor,
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.bold,
                 ),
               ],
             ),
@@ -648,25 +632,83 @@ class QiblaView extends GetView<QiblaController> {
               controller.distanceToKaaba.value,
               textColor,
             ),
-            _buildInfoRow(
-              'حالة البوصلة',
-              'جاهزة',
-              textColor,
-            ),
+            _buildInfoRow('حالة البوصلة', 'جاهزة', textColor),
             const Divider(height: 24),
-            Text('ملاحظة: للحصول على أفضل دقة، ضع الهاتف بشكل مسطح وابتعد عن الأجهزة المغناطيسية.',
-              style: GoogleFonts.getFont(
-                'Noto Naskh Arabic',
-                textStyle: TextStyle(
-                  color: textColor.withValues(alpha: 0.5),
-                  fontSize: 11.sp,
-                  height: 1.5,
-                ),
-              ),
+            TextApp(
+              text: 'ملاحظة: للحصول على أفضل دقة، ضع الهاتف بشكل مسطح وابتعد عن الأجهزة المغناطيسية.',
+              color: textColor.withValues(alpha: 0.5),
+              fontSize: 11.sp,
+              height: 1.5,
             ),
           ],
         );
       }),
+    );
+  }
+
+  Widget _buildCalibrationCard(
+    Color cardBg,
+    Color outlineColor,
+    Color textColor,
+    Color goldColor,
+    bool isDark,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: outlineColor, width: 1.w),
+        boxShadow: AppTheme.shadowSm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.screen_rotation_rounded, color: goldColor, size: 20.r),
+              SizedBox(width: 8.w),
+              TextApp(
+                text: 'طريقة معايرة البوصلة',
+                color: textColor,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.bold,
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: TextApp(
+                  text: 'للحصول على أفضل دقة وتجنب التداخل المغناطيسي، يرجى تدوير الهاتف في الهواء على شكل الرقم 8 (♾️) مرتين أو ثلاث مرات، مع إبقائه في وضع أفقي مسطح.',
+                  color: textColor.withValues(alpha: 0.7),
+                  fontSize: 11.sp,
+                  height: 1.6,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Container(
+                width: 60.w,
+                height: 60.w,
+                decoration: BoxDecoration(
+                  color: goldColor.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.all_inclusive_rounded,
+                    color: goldColor,
+                    size: 32.r,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -676,16 +718,13 @@ class QiblaView extends GetView<QiblaController> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title,
-            style: GoogleFonts.getFont(
-              'Noto Naskh Arabic',
-              textStyle: TextStyle(
-                color: textColor.withValues(alpha: 0.7),
-                fontSize: 13.sp,
-              ),
-            ),
+          TextApp(
+            text: title,
+            color: textColor.withValues(alpha: 0.7),
+            fontSize: 13.sp,
           ),
-          Text(val,
+          Text(
+            val,
             style: GoogleFonts.getFont(
               'Outfit',
               textStyle: TextStyle(
@@ -732,15 +771,11 @@ class QiblaView extends GetView<QiblaController> {
               ),
             ),
             SizedBox(height: 16.h),
-            Text('اختر المدينة',
-              style: GoogleFonts.getFont(
-                'Noto Naskh Arabic',
-                textStyle: TextStyle(
-                  color: primaryColor,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            TextApp(
+              text: 'اختر المدينة',
+              color: primaryColor,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
             ),
             SizedBox(height: 12.h),
             ...controller.cities.map((city) {
@@ -749,23 +784,18 @@ class QiblaView extends GetView<QiblaController> {
               final String distance = controller.getDistanceForCity(city);
 
               return ListTile(
-                title: Text(_getCityName(key),
-                  style: GoogleFonts.getFont(
-                    'Noto Naskh Arabic',
-                    textStyle: TextStyle(color: textColor, fontSize: 14.sp),
-                  ),
+                title: TextApp(
+                  text: _getCityName(key),
+                  color: textColor,
+                  fontSize: 14.sp,
                 ),
-                subtitle: Text(key == 'gpsCurrentLocation' &&
+                subtitle: TextApp(
+                  text: key == 'gpsCurrentLocation' &&
                           controller.selectedCity.value != 'gpsCurrentLocation'
                       ? 'استخدام موقعك الحالي عبر GPS لمزيد من الدقة'
                       : 'الزاوية: ${controller.toArabicNumbers(angle.toStringAsFixed(0))}° - المسافة: $distance',
-                  style: GoogleFonts.getFont(
-                    'Noto Naskh Arabic',
-                    textStyle: TextStyle(
-                      color: textColor.withValues(alpha: 0.5),
-                      fontSize: 11.sp,
-                    ),
-                  ),
+                  color: textColor.withValues(alpha: 0.5),
+                  fontSize: 11.sp,
                 ),
                 trailing: Obx(
                   () => controller.selectedCity.value == key
@@ -791,6 +821,14 @@ class QiblaView extends GetView<QiblaController> {
     switch (key) {
       case 'jerusalem':
         return 'القدس الشريف';
+      case 'gaza':
+        return 'غزة الأبية';
+      case 'cairo':
+        return 'القاهرة';
+      case 'madinah':
+        return 'المدينة المنورة';
+      case 'riyadh':
+        return 'الرياض';
       case 'mecca':
         return 'مكة المكرمة';
       case 'gpsCurrentLocation':

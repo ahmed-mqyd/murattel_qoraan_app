@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-enum MushafFilterMode { surah, juz, page }
-
 class MushafController extends GetxController {
   final searchQuery = ''.obs;
   late final TextEditingController searchController;
-
-  final filterMode = MushafFilterMode.surah.obs;
 
   final List<Map<String, dynamic>> surahs = [
     {'id': 1, 'name': 'الفَاتِحَة', 'verses': 7, 'type': 'مكية', 'page': 1, 'progress': 0.75},
@@ -125,40 +121,6 @@ class MushafController extends GetxController {
     {'id': 113, 'name': 'الفَلَق', 'verses': 5, 'type': 'مكية', 'page': 604, 'progress': 0.0},
     {'id': 114, 'name': 'النَّاس', 'verses': 6, 'type': 'مكية', 'page': 604, 'progress': 0.0},
   ];
-
-  final List<Map<String, dynamic>> juzs = [
-    {'juz': 1, 'surahId': 1, 'ayahIndex': 0, 'page': 1, 'surahName': 'الفَاتِحَة'},
-    {'juz': 2, 'surahId': 2, 'ayahIndex': 141, 'page': 22, 'surahName': 'البَقَرَة'},
-    {'juz': 3, 'surahId': 2, 'ayahIndex': 252, 'page': 42, 'surahName': 'البَقَرَة'},
-    {'juz': 4, 'surahId': 3, 'ayahIndex': 92, 'page': 62, 'surahName': 'آل عِمرَان'},
-    {'juz': 5, 'surahId': 4, 'ayahIndex': 23, 'page': 82, 'surahName': 'النِّسَاء'},
-    {'juz': 6, 'surahId': 4, 'ayahIndex': 147, 'page': 102, 'surahName': 'النِّسَاء'},
-    {'juz': 7, 'surahId': 5, 'ayahIndex': 81, 'page': 122, 'surahName': 'المَائِدَة'},
-    {'juz': 8, 'surahId': 6, 'ayahIndex': 110, 'page': 142, 'surahName': 'الأنعَام'},
-    {'juz': 9, 'surahId': 7, 'ayahIndex': 87, 'page': 162, 'surahName': 'الأعرَاف'},
-    {'juz': 10, 'surahId': 8, 'ayahIndex': 40, 'page': 182, 'surahName': 'الأنفَال'},
-    {'juz': 11, 'surahId': 9, 'ayahIndex': 92, 'page': 202, 'surahName': 'التَّوبَة'},
-    {'juz': 12, 'surahId': 11, 'ayahIndex': 5, 'page': 222, 'surahName': 'هُود'},
-    {'juz': 13, 'surahId': 12, 'ayahIndex': 52, 'page': 242, 'surahName': 'يُوسُف'},
-    {'juz': 14, 'surahId': 15, 'ayahIndex': 0, 'page': 262, 'surahName': 'الحِجْر'},
-    {'juz': 15, 'surahId': 17, 'ayahIndex': 0, 'page': 282, 'surahName': 'الإِسْرَاء'},
-    {'juz': 16, 'surahId': 18, 'ayahIndex': 74, 'page': 302, 'surahName': 'الكَهْف'},
-    {'juz': 17, 'surahId': 21, 'ayahIndex': 0, 'page': 322, 'surahName': 'الأَنْبِيَاء'},
-    {'juz': 18, 'surahId': 23, 'ayahIndex': 0, 'page': 342, 'surahName': 'المُؤْمِنُون'},
-    {'juz': 19, 'surahId': 25, 'ayahIndex': 20, 'page': 362, 'surahName': 'الفُرْقَان'},
-    {'juz': 20, 'surahId': 27, 'ayahIndex': 55, 'page': 382, 'surahName': 'النَّمْل'},
-    {'juz': 21, 'surahId': 29, 'ayahIndex': 45, 'page': 402, 'surahName': 'العَنْكَبُوت'},
-    {'juz': 22, 'surahId': 33, 'ayahIndex': 30, 'page': 422, 'surahName': 'الأَحْزَاب'},
-    {'juz': 23, 'surahId': 36, 'ayahIndex': 27, 'page': 442, 'surahName': 'يس'},
-    {'juz': 24, 'surahId': 39, 'ayahIndex': 31, 'page': 462, 'surahName': 'الزُّمَر'},
-    {'juz': 25, 'surahId': 41, 'ayahIndex': 46, 'page': 482, 'surahName': 'فُصِّلَت'},
-    {'juz': 26, 'surahId': 46, 'ayahIndex': 0, 'page': 502, 'surahName': 'الأَحْقَاف'},
-    {'juz': 27, 'surahId': 51, 'ayahIndex': 30, 'page': 522, 'surahName': 'الذَّارِيَات'},
-    {'juz': 28, 'surahId': 58, 'ayahIndex': 0, 'page': 542, 'surahName': 'المُجَادِلَة'},
-    {'juz': 29, 'surahId': 67, 'ayahIndex': 0, 'page': 562, 'surahName': 'المُلْك'},
-    {'juz': 30, 'surahId': 78, 'ayahIndex': 0, 'page': 582, 'surahName': 'النَّبَأ'},
-  ];
-
   @override
   void onInit() {
     super.onInit();
@@ -185,23 +147,5 @@ class MushafController extends GetxController {
       final page = surah['page'].toString();
       return name.contains(query) || id == query || page == query;
     }).toList();
-  }
-
-  Map<String, dynamic> getSurahForPage(int pageNumber) {
-    for (int i = surahs.length - 1; i >= 0; i--) {
-      final surah = surahs[i];
-      if (surah['page'] <= pageNumber) {
-        return {
-          'id': surah['id'],
-          'name': surah['name'],
-          'initialAyahIndex': 0,
-        };
-      }
-    }
-    return {
-      'id': 1,
-      'name': 'الفَاتِحَة',
-      'initialAyahIndex': 0,
-    };
   }
 }

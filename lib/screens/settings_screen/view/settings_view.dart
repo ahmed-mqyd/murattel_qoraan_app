@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:murattel_qoraan_app/core/text_app/text_app.dart';
 import 'package:murattel_qoraan_app/core/theme/app_theme.dart';
 import 'package:murattel_qoraan_app/core/images/images_const.dart';
+import 'package:murattel_qoraan_app/core/theme/theme_service.dart';
 import '../controller/settings_controller.dart';
 
 class SettingsView extends GetView<SettingsController> {
@@ -12,25 +13,13 @@ class SettingsView extends GetView<SettingsController> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    final Color backgroundColor = isDark
-        ? const Color(0xFF02160F)
-        : const Color(0xFFFDFBF7);
-    final Color cardBackgroundColor = isDark
-        ? const Color(0xFF052219)
-        : Colors.white;
-    final Color outlineColor = isDark
-        ? const Color(0xFF204F3F).withValues(alpha: 0.3)
-        : const Color(0xFFBFC9C3).withValues(alpha: 0.4);
-    final Color textColor = isDark
-        ? const Color(0xFFE2E2E5)
-        : const Color(0xFF1A1C1E);
-    final Color primaryColor = isDark
-        ? const Color(0xFFA0D1BC)
-        : const Color(0xFF003527);
-    final Color goldColor = const Color(0xFFC5A059);
+    final colors = ThemeColors.of(context);
+    final backgroundColor = colors.backgroundColor;
+    final cardBackgroundColor = colors.cardBackgroundColor;
+    final outlineColor = colors.outlineColor;
+    final textColor = colors.textColor;
+    final primaryColor = colors.primaryColor;
+    final goldColor = colors.goldColor;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -47,17 +36,6 @@ class SettingsView extends GetView<SettingsController> {
               // 1. Header Logo
               _buildHeaderIcon(primaryColor),
 
-              SizedBox(height: 16.h),
-
-              // 3. Quick Theme Toggle Row
-              _buildThemeToggleRow(
-                context,
-                cardBackgroundColor,
-                outlineColor,
-                goldColor,
-                textColor,
-                isDark,
-              ),
               SizedBox(height: 16.h),
 
               // 4. Notifications Card Section
@@ -101,7 +79,6 @@ class SettingsView extends GetView<SettingsController> {
                 primaryColor,
                 textColor,
                 goldColor,
-                isDark,
               ),
               SizedBox(height: 32.h),
             ],
@@ -130,79 +107,6 @@ class SettingsView extends GetView<SettingsController> {
           padding: EdgeInsets.all(4.w),
           child: Image.asset(appLogo, fit: BoxFit.contain),
         ),
-      ),
-    );
-  }
-
-  Widget _buildThemeToggleRow(
-    BuildContext context,
-    Color cardBg,
-    Color outlineColor,
-    Color goldColor,
-    Color textColor,
-    bool isDark,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: outlineColor, width: 1.w),
-        boxShadow: AppTheme.shadowSm,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36.w,
-                height: 36.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: goldColor.withValues(alpha: 0.1),
-                ),
-                child: Icon(
-                  isDark ? Icons.dark_mode : Icons.light_mode,
-                  color: goldColor,
-                  size: 20.r,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextApp(
-                    text: 'وضع المظهر',
-
-                    color: textColor,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  SizedBox(height: 2.h),
-                  TextApp(
-                    text: isDark ? 'الوضع الداكن مفعل' : 'الوضع الفاتح مفعل',
-
-                    color: textColor.withValues(alpha: 0.6),
-                    fontSize: 11.sp,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          Switch(
-            value: isDark,
-            activeThumbColor: goldColor,
-            onChanged: (value) {
-              HapticFeedback.lightImpact();
-              if (value) {
-                Get.changeThemeMode(ThemeMode.dark);
-              } else {
-                Get.changeThemeMode(ThemeMode.light);
-              }
-            },
-          ),
-        ],
       ),
     );
   }
@@ -429,8 +333,8 @@ class SettingsView extends GetView<SettingsController> {
     Color primaryColor,
     Color textColor,
     Color goldColor,
-    bool isDark,
   ) {
+    final themeController = Get.find<ThemeController>();
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -460,118 +364,154 @@ class SettingsView extends GetView<SettingsController> {
           const Divider(height: 1),
           Padding(
             padding: EdgeInsets.all(16.w),
-            child: Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      Get.changeThemeMode(ThemeMode.dark);
-                    },
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Container(
-                      padding: EdgeInsets.all(12.w),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                          color: isDark ? goldColor : Colors.transparent,
-                          width: 2.w,
+            child: Obx(() {
+              final activeMode = themeController.themeModeString;
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      // 1. Light Theme
+                      Expanded(
+                        child: _buildThemeItem(
+                          title: 'فاتح',
+                          mode: 'light',
+                          activeMode: activeMode,
+                          goldColor: goldColor,
+                          textColor: textColor,
+                          previewColor: const Color(0xFFFDFBF7),
+                          previewSubColor: Colors.black.withValues(alpha: 0.1),
+                          onTap: () => themeController.setThemeMode('light'),
                         ),
-                        color: isDark
-                            ? goldColor.withValues(alpha: 0.08)
-                            : Colors.black.withValues(alpha: 0.04),
                       ),
-                      child: Column(
-                        children: [
-                          Container(
-                            height: 60.h,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF02160F),
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Center(
-                              child: Container(
-                                width: 40.w,
-                                height: 6.h,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(4.r),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 8.h),
-                          TextApp(
-                            text: 'داكن',
-                            color: textColor,
-                            fontSize: 13.sp,
-                            fontWeight: isDark
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ],
+                      SizedBox(width: 16.w),
+                      // 2. Dark Theme
+                      Expanded(
+                        child: _buildThemeItem(
+                          title: 'داكن',
+                          mode: 'dark',
+                          activeMode: activeMode,
+                          goldColor: goldColor,
+                          textColor: textColor,
+                          previewColor: const Color(0xFF02160F),
+                          previewSubColor: Colors.white.withValues(alpha: 0.2),
+                          onTap: () => themeController.setThemeMode('dark'),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ),
-                SizedBox(width: 16.w),
-                Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      Get.changeThemeMode(ThemeMode.light);
-                    },
-                    borderRadius: BorderRadius.circular(12.r),
-                    child: Container(
-                      padding: EdgeInsets.all(12.w),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                          color: !isDark ? goldColor : Colors.transparent,
-                          width: 2.w,
+                  SizedBox(height: 16.h),
+                  Row(
+                    children: [
+                      // 3. Sepia Theme (Warm Paper)
+                      Expanded(
+                        child: _buildThemeItem(
+                          title: 'ورقي دافئ',
+                          mode: 'sepia',
+                          activeMode: activeMode,
+                          goldColor: goldColor,
+                          textColor: textColor,
+                          previewColor: const Color(0xFFF4ECD8),
+                          previewSubColor: const Color(0xFF3E2723).withValues(alpha: 0.15),
+                          onTap: () => themeController.setThemeMode('sepia'),
                         ),
-                        color: !isDark
-                            ? goldColor.withValues(alpha: 0.08)
-                            : Colors.black.withValues(alpha: 0.04),
                       ),
-                      child: Column(
-                        children: [
-                          Container(
-                            height: 60.h,
+                      SizedBox(width: 16.w),
+                      // 4. System Theme
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            themeController.setThemeMode('system');
+                          },
+                          borderRadius: BorderRadius.circular(12.r),
+                          child: Container(
+                            padding: EdgeInsets.all(12.w),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFDFBF7),
+                              borderRadius: BorderRadius.circular(12.r),
                               border: Border.all(
-                                color: Colors.black.withValues(alpha: 0.05),
+                                color: activeMode == 'system' ? goldColor : Colors.transparent,
+                                width: 2.w,
                               ),
-                              borderRadius: BorderRadius.circular(8.r),
+                              color: activeMode == 'system'
+                                  ? goldColor.withValues(alpha: 0.08)
+                                  : Colors.black.withValues(alpha: 0.04),
                             ),
-                            child: Center(
-                              child: Container(
-                                width: 40.w,
-                                height: 6.h,
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(4.r),
+                            child: Column(
+                              children: [
+                                Container(
+                                  height: 60.h,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    border: Border.all(
+                                      color: Colors.black.withValues(alpha: 0.05),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF02160F),
+                                            borderRadius: BorderRadius.only(
+                                              topRight: Radius.circular(7.r),
+                                              bottomRight: Radius.circular(7.r),
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Container(
+                                              width: 18.w,
+                                              height: 4.h,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withValues(alpha: 0.2),
+                                                borderRadius: BorderRadius.circular(2.r),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFFDFBF7),
+                                            borderRadius: BorderRadius.only(
+                                              topLeft: Radius.circular(7.r),
+                                              bottomLeft: Radius.circular(7.r),
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Container(
+                                              width: 18.w,
+                                              height: 4.h,
+                                              decoration: BoxDecoration(
+                                                color: Colors.black.withValues(alpha: 0.1),
+                                                borderRadius: BorderRadius.circular(2.r),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
+                                SizedBox(height: 8.h),
+                                TextApp(
+                                  text: 'تلقائي',
+                                  color: textColor,
+                                  fontSize: 13.sp,
+                                  fontWeight: activeMode == 'system'
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                              ],
                             ),
                           ),
-                          SizedBox(height: 8.h),
-                          TextApp(
-                            text: 'فاتح',
-                            color: textColor,
-                            fontSize: 13.sp,
-                            fontWeight: !isDark
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ),
-              ],
-            ),
+                ],
+              );
+            }),
           ),
         ],
       ),
@@ -588,6 +528,14 @@ class SettingsView extends GetView<SettingsController> {
         return 'ماهر المعيقلي';
       case 'ghamdi':
         return 'سعد الغامدي';
+      case 'faresabbad':
+        return 'فارس عباد';
+      case 'yasser':
+        return 'ياسر الدوسري';
+      case 'islamsobhi':
+        return 'إسلام صبحي';
+      case 'ahmedshafei':
+        return 'أحمد الشافعي';
       default:
         return '';
     }
@@ -647,6 +595,10 @@ class SettingsView extends GetView<SettingsController> {
       {'key': 'abdulbasit', 'name': 'عبد الباسط عبد الصمد'},
       {'key': 'almuaiqly', 'name': 'ماهر المعيقلي'},
       {'key': 'ghamdi', 'name': 'سعد الغامدي'},
+      {'key': 'faresabbad', 'name': 'فارس عباد'},
+      {'key': 'yasser', 'name': 'ياسر الدوسري'},
+      {'key': 'islamsobhi', 'name': 'إسلام صبحي'},
+      {'key': 'ahmedshafei', 'name': 'أحمد الشافعي'},
     ];
 
     showDialog(
@@ -717,6 +669,71 @@ class SettingsView extends GetView<SettingsController> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildThemeItem({
+    required String title,
+    required String mode,
+    required String activeMode,
+    required Color goldColor,
+    required Color textColor,
+    required Color previewColor,
+    required Color previewSubColor,
+    required VoidCallback onTap,
+  }) {
+    final bool isActive = activeMode == mode;
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: isActive ? goldColor : Colors.transparent,
+            width: 2.w,
+          ),
+          color: isActive
+              ? goldColor.withValues(alpha: 0.08)
+              : Colors.black.withValues(alpha: 0.04),
+        ),
+        child: Column(
+          children: [
+            Container(
+              height: 60.h,
+              decoration: BoxDecoration(
+                color: previewColor,
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  width: 1.w,
+                ),
+              ),
+              child: Center(
+                child: Container(
+                  width: 40.w,
+                  height: 6.h,
+                  decoration: BoxDecoration(
+                    color: previewSubColor,
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 8.h),
+            TextApp(
+              text: title,
+              color: textColor,
+              fontSize: 13.sp,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

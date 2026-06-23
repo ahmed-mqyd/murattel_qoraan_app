@@ -146,6 +146,39 @@ class NotificationServices {
     }
   }
 
+  /// إشعار يومي لخطة الختمة الذكية
+  static Future<void> scheduleKhatmahDailyReminder(
+    int dailyPages,
+    int hour,
+  ) async {
+    // إلغاء الإشعار القديم أولاً
+    await _notificationsPlugin.cancel(id: 200);
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'khatmah_channel',
+          'مخطط الختمة',
+          importance: Importance.high,
+          priority: Priority.high,
+        );
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
+    const NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _notificationsPlugin.zonedSchedule(
+      id: 200,
+      title: '📖 ورد الختمة اليومي',
+      body: 'تبقى لك $dailyPages صفحة لهدف اليوم، لا تفوّت الورد!',
+      scheduledDate: _nextInstanceOfTime(hour, 0),
+      notificationDetails: platformDetails,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+      payload: 'reminder',
+    );
+  }
+
   static Future<void> schedulePrayerNotifications(
     Map<String, dynamic> timings,
   ) async {

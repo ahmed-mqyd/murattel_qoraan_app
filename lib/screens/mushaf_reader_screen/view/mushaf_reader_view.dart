@@ -7,32 +7,22 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:murattel_qoraan_app/core/text_app/text_app.dart';
 import 'package:murattel_qoraan_app/core/theme/app_theme.dart';
+import 'package:murattel_qoraan_app/core/theme/theme_service.dart';
 import '../controller/mushaf_reader_controller.dart';
+import 'widgets/ayah_card_sheet.dart';
 
 class MushafReaderView extends GetView<MushafReaderController> {
   const MushafReaderView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    final Color backgroundColor = isDark
-        ? const Color(0xFF02160F)
-        : const Color(0xFFFDFBF7);
-    final Color cardBackgroundColor = isDark
-        ? const Color(0xFF052219)
-        : Colors.white;
-    final Color outlineColor = isDark
-        ? const Color(0xFF204F3F).withValues(alpha: 0.3)
-        : const Color(0xFFBFC9C3).withValues(alpha: 0.4);
-    final Color textColor = isDark
-        ? const Color(0xFFE2E2E5)
-        : const Color(0xFF1A1C1E);
-    final Color primaryColor = isDark
-        ? const Color(0xFFA0D1BC)
-        : const Color(0xFF003527);
-    final Color goldColor = const Color(0xFFC5A059);
+    final colors = ThemeColors.of(context);
+    final backgroundColor = colors.backgroundColor;
+    final cardBackgroundColor = colors.cardBackgroundColor;
+    final outlineColor = colors.outlineColor;
+    final textColor = colors.textColor;
+    final primaryColor = colors.primaryColor;
+    final goldColor = colors.goldColor;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -66,6 +56,99 @@ class MushafReaderView extends GetView<MushafReaderController> {
           fontWeight: FontWeight.bold,
         ),
         actions: [
+          Obx(() {
+            if (controller.isDownloading.value) {
+              return Container(
+                margin: EdgeInsets.symmetric(vertical: 8.h),
+                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20.r),
+                  color: cardBackgroundColor,
+                  border: Border.all(color: outlineColor, width: 1.w),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 18.w,
+                      height: 18.w,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.w,
+                        value: controller.downloadProgress.value,
+                        valueColor: AlwaysStoppedAnimation<Color>(goldColor),
+                      ),
+                    ),
+                    SizedBox(width: 6.w),
+                    TextApp(
+                      text: '${(controller.downloadProgress.value * 100).toInt()}%',
+                      color: goldColor,
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.cancel_rounded, color: Colors.red, size: 16.r),
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        controller.isDownloading.value = false;
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            if (controller.isSurahDownloaded.value) {
+              return Container(
+                margin: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: cardBackgroundColor,
+                  border: Border.all(color: outlineColor, width: 1.w),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.cloud_done_rounded,
+                    color: Colors.green,
+                    size: 18.r,
+                  ),
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    Get.defaultDialog(
+                      title: 'حذف التلاوة المحملة',
+                      middleText: 'هل تريد حذف الملفات الصوتية لسورة ${controller.surahName} لتوفير مساحة على الهاتف؟',
+                      textConfirm: 'نعم، احذف',
+                      textCancel: 'إلغاء',
+                      confirmTextColor: Colors.white,
+                      buttonColor: const Color(0xFFBA1A1A),
+                      onConfirm: () {
+                        Get.back();
+                        controller.deleteDownloadedSurahAudio();
+                      },
+                    );
+                  },
+                ),
+              );
+            }
+
+            return Container(
+              margin: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: cardBackgroundColor,
+                border: Border.all(color: outlineColor, width: 1.w),
+              ),
+              child: IconButton(
+                icon: Icon(
+                  Icons.cloud_download_rounded,
+                  color: goldColor,
+                  size: 18.r,
+                ),
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  controller.downloadSurahAudio();
+                },
+              ),
+            );
+          }),
           Container(
             margin: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
             decoration: BoxDecoration(
@@ -154,7 +237,19 @@ class MushafReaderView extends GetView<MushafReaderController> {
             );
           }
 
-          return Stack(
+          return GestureDetector(
+            onHorizontalDragEnd: (details) {
+              if (details.primaryVelocity == null) return;
+              // RTL: سحب يسار (سالب) = سورة تالية، سحب يمين (موجب) = سورة سابقة
+              if (details.primaryVelocity! < -300) {
+                HapticFeedback.mediumImpact();
+                controller.navigateToNextSurah();
+              } else if (details.primaryVelocity! > 300) {
+                HapticFeedback.mediumImpact();
+                controller.navigateToPrevSurah();
+              }
+            },
+            child: Stack(
             children: [
               // Scrollable Continuous Verses View
               SingleChildScrollView(
@@ -359,44 +454,138 @@ class MushafReaderView extends GetView<MushafReaderController> {
                                 ),
                               ],
                             ),
-                            IconButton(
-                              visualDensity: VisualDensity.compact,
-                              icon: Icon(
-                                isBookmarked
-                                    ? Icons.bookmark_rounded
-                                    : Icons.bookmark_border_rounded,
-                                color: goldColor,
-                                size: 22.r,
-                              ),
-                              onPressed: () {
-                                HapticFeedback.selectionClick();
-                                controller.toggleBookmark(selectedIdx);
-                              },
+                            Row(
+                              children: [
+                                // زر مشاركة البطاقة
+                                IconButton(
+                                  visualDensity: VisualDensity.compact,
+                                  icon: Icon(Icons.image_rounded, color: primaryColor.withValues(alpha: 0.7), size: 22.r),
+                                  onPressed: () {
+                                    HapticFeedback.selectionClick();
+                                    Get.bottomSheet(
+                                      AyahCardSheet(
+                                        ayahIndex: selectedIdx,
+                                        controller: controller,
+                                      ),
+                                      isScrollControlled: true,
+                                    );
+                                  },
+                                ),
+                                IconButton(
+                                  visualDensity: VisualDensity.compact,
+                                  icon: Icon(
+                                    isBookmarked
+                                        ? Icons.bookmark_rounded
+                                        : Icons.bookmark_border_rounded,
+                                    color: goldColor,
+                                    size: 22.r,
+                                  ),
+                                  onPressed: () {
+                                    HapticFeedback.selectionClick();
+                                    controller.toggleBookmark(selectedIdx);
+                                  },
+                                ),
+                              ],
                             ),
                           ],
                         ),
 
                         const Divider(height: 12, thickness: 0.5),
 
-                        // Translation Display Area
-                        Container(
-                          constraints: BoxConstraints(maxHeight: 70.h),
-                          child: SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            child: Directionality(
-                              textDirection: TextDirection.ltr,
-                              child: Text(
-                                enTranslationText,
-                                textAlign: TextAlign.left,
-                                style: GoogleFonts.inter(
-                                  textStyle: TextStyle(
-                                    color: textColor.withValues(alpha: 0.85),
-                                    fontSize: controller.enFontSize.value.sp,
-                                    height: 1.45,
+                        // Tab Selector for Translation / Tafseer
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  controller.showTafseer.value = false;
+                                },
+                                borderRadius: BorderRadius.circular(10.r),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(vertical: 6.h),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10.r),
+                                    color: !controller.showTafseer.value
+                                        ? primaryColor.withValues(alpha: 0.12)
+                                        : Colors.transparent,
+                                    border: Border.all(
+                                      color: !controller.showTafseer.value
+                                          ? goldColor.withValues(alpha: 0.4)
+                                          : Colors.transparent,
+                                      width: 1.w,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: TextApp(
+                                      text: 'الترجمة (EN)',
+                                      color: !controller.showTafseer.value ? goldColor : textColor.withValues(alpha: 0.6),
+                                      fontSize: 12.sp,
+                                      fontWeight: !controller.showTafseer.value ? FontWeight.bold : FontWeight.normal,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  controller.showTafseer.value = true;
+                                },
+                                borderRadius: BorderRadius.circular(10.r),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(vertical: 6.h),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10.r),
+                                    color: controller.showTafseer.value
+                                        ? primaryColor.withValues(alpha: 0.12)
+                                        : Colors.transparent,
+                                    border: Border.all(
+                                      color: controller.showTafseer.value
+                                          ? goldColor.withValues(alpha: 0.4)
+                                          : Colors.transparent,
+                                      width: 1.w,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: TextApp(
+                                      text: 'التفسير (الميسر)',
+                                      color: controller.showTafseer.value ? goldColor : textColor.withValues(alpha: 0.6),
+                                      fontSize: 12.sp,
+                                      fontWeight: controller.showTafseer.value ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 6.h),
+                        const Divider(height: 8, thickness: 0.5),
+
+                        // Translation or Tafseer Display Area
+                        Container(
+                          constraints: BoxConstraints(maxHeight: 70.h),
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            child: controller.showTafseer.value
+                                ? _buildTafseerContent(selectedIdx, textColor, goldColor)
+                                : Directionality(
+                                    textDirection: TextDirection.ltr,
+                                    child: Text(
+                                      enTranslationText,
+                                      textAlign: TextAlign.left,
+                                      style: GoogleFonts.inter(
+                                        textStyle: TextStyle(
+                                          color: textColor.withValues(alpha: 0.85),
+                                          fontSize: controller.enFontSize.value.sp,
+                                          height: 1.45,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                           ),
                         ),
                         SizedBox(height: 8.h),
@@ -497,6 +686,7 @@ class MushafReaderView extends GetView<MushafReaderController> {
                 }),
               ),
             ],
+            ),
           );
         }),
       ),
@@ -751,6 +941,64 @@ class MushafReaderView extends GetView<MushafReaderController> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTafseerContent(int selectedIdx, Color textColor, Color goldColor) {
+    if (controller.isTafseerLoading.value) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.h),
+          child: SpinKitThreeBounce(color: goldColor, size: 20.w),
+        ),
+      );
+    }
+
+    if (controller.tafseerError.isNotEmpty) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.h),
+          child: Column(
+            children: [
+              TextApp(
+                text: controller.tafseerError.value,
+                color: Colors.red,
+                fontSize: 12.sp,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 8.h),
+              TextButton.icon(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  controller.fetchTafseerData();
+                },
+                icon: Icon(Icons.refresh, color: goldColor, size: 16.r),
+                label: TextApp(text: 'إعادة المحاولة', color: goldColor, fontSize: 12.sp),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final String tafseerText =
+        controller.tafseerVerses.isNotEmpty &&
+                selectedIdx < controller.tafseerVerses.length
+            ? controller.tafseerVerses[selectedIdx]
+            : 'لا يوجد تفسير متوفر لهذه الآية.';
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Text(
+        tafseerText,
+        textAlign: TextAlign.justify,
+        style: TextStyle(
+          color: textColor.withValues(alpha: 0.9),
+          fontSize: (controller.arFontSize.value - 8).clamp(13.0, 22.0).sp,
+          height: 1.5,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }

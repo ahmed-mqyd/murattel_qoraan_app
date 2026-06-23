@@ -264,16 +264,11 @@ class AzkarView extends GetView<AzkarController> {
                     ),
                     SizedBox(width: 4.w),
                   ],
-                  Text(
-                    'الذكر ${_toArabicNumbers((index + 1).toString())}',
-                    style: GoogleFonts.getFont(
-                      'Noto Naskh Arabic',
-                      textStyle: TextStyle(
-                        color: isSelected ? Colors.white : text,
-                        fontSize: 12.sp,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
+                  TextApp(
+                    text: 'الذكر ${_toArabicNumbers((index + 1).toString())}',
+                    color: isSelected ? Colors.white : text,
+                    fontSize: 12.sp,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ],
               ),
@@ -488,16 +483,11 @@ class AzkarView extends GetView<AzkarController> {
                 children: [
                   Icon(Icons.stars, color: gold, size: 18.r),
                   SizedBox(width: 8.w),
-                  Text(
-                    'تقدم الأذكار اليوم:',
-                    style: GoogleFonts.getFont(
-                      'Noto Naskh Arabic',
-                      textStyle: TextStyle(
-                        color: text,
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  TextApp(
+                    text: 'تقدم الأذكار اليوم:',
+                    color: text,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.bold,
                   ),
                 ],
               ),
@@ -589,27 +579,17 @@ class AzkarView extends GetView<AzkarController> {
           children: [
             Icon(Icons.check_circle_rounded, color: gold, size: 40.r),
             SizedBox(height: 12.h),
-            Text(
-              'تقبل الله طاعتكم',
-              style: GoogleFonts.getFont(
-                'Noto Naskh Arabic',
-                textStyle: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            TextApp(
+              text: 'تقبل الله طاعتكم',
+              color: Colors.white,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
             ),
             SizedBox(height: 4.h),
-            Text(
-              'تم إتمام جميع خطوات الأذكار لهذا القسم بنجاح',
-              style: GoogleFonts.getFont(
-                'Noto Naskh Arabic',
-                textStyle: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 12.sp,
-                ),
-              ),
+            TextApp(
+              text: 'تم إتمام جميع خطوات الأذكار لهذا القسم بنجاح',
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 12.sp,
             ),
             SizedBox(height: 16.h),
             ElevatedButton(
@@ -622,15 +602,10 @@ class AzkarView extends GetView<AzkarController> {
                 ),
                 padding: EdgeInsets.symmetric(horizontal: 36.w, vertical: 12.h),
               ),
-              child: Text(
-                'العودة للرئيسية',
-                style: GoogleFonts.getFont(
-                  'Noto Naskh Arabic',
-                  textStyle: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              child: TextApp(
+                text: 'العودة للرئيسية',
+                fontSize: 13.sp,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
@@ -642,12 +617,11 @@ class AzkarView extends GetView<AzkarController> {
   void _showResetConfirmDialog(BuildContext context) {
     Get.defaultDialog(
       title: 'إعادة ضبط الأذكار',
-      titleStyle: GoogleFonts.getFont(
-        'Noto Naskh Arabic',
-        textStyle: const TextStyle(fontWeight: FontWeight.bold),
+      titleStyle: TextApp.style(
+        fontWeight: FontWeight.bold,
       ),
       middleText: 'هل تريد إعادة تصفير عدادات الأذكار للقسم الحالي للبدء من جديد؟',
-      middleTextStyle: GoogleFonts.getFont('Noto Naskh Arabic'),
+      middleTextStyle: TextApp.style(),
       backgroundColor: Colors.white,
       radius: 16.r,
       textConfirm: 'نعم، إعادة ضبط',

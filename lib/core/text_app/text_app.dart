@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class TextApp extends StatelessWidget {
+  static const String arabicFontFamily = 'Noto Naskh Arabic';
+
   const TextApp({
     super.key,
     required this.text,
@@ -31,6 +33,37 @@ class TextApp extends StatelessWidget {
   final TextDecoration? decoration;
   final Offset offset;
 
+  static TextStyle style({
+    Color? color,
+    double? fontSize,
+    FontWeight? fontWeight,
+    TextDecoration? decoration,
+    double? height,
+    Color? shadowColor,
+    double? blurRadius,
+    Offset offset = const Offset(0, 2),
+  }) {
+    return GoogleFonts.getFont(
+      arabicFontFamily,
+      textStyle: TextStyle(
+        color: color,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        decoration: decoration,
+        height: height,
+        shadows: shadowColor != null
+            ? [
+                Shadow(
+                  color: shadowColor,
+                  blurRadius: blurRadius ?? 0.0,
+                  offset: offset,
+                ),
+              ]
+            : null,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Text(
@@ -38,25 +71,15 @@ class TextApp extends StatelessWidget {
       textAlign: textAlign,
       maxLines: maxLines,
       overflow: overflow,
-      style: GoogleFonts.getFont(
-        'Noto Naskh Arabic',
-
-        textStyle: TextStyle(
-          color: color,
-          fontSize: fontSize,
-          fontWeight: fontWeight,
-          decoration: decoration,
-          height: height,
-          shadows: shadowColor != null
-              ? [
-                  Shadow(
-                    color: shadowColor!,
-                    blurRadius: blurRadius ?? 0.0,
-                    offset: offset,
-                  ),
-                ]
-              : null,
-        ),
+      style: style(
+        color: color,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        decoration: decoration,
+        height: height,
+        shadowColor: shadowColor,
+        blurRadius: blurRadius,
+        offset: offset,
       ),
     );
   }

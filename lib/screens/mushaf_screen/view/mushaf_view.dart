@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:murattel_qoraan_app/core/text_app/text_app.dart';
 import 'package:murattel_qoraan_app/core/theme/app_theme.dart';
 import 'package:murattel_qoraan_app/core/routes/app_routes.dart';
@@ -65,18 +64,12 @@ class MushafView extends GetView<MushafController> {
                     ),
                     child: TextField(
                       controller: controller.searchController,
-                      style: GoogleFonts.getFont(
-                        'Noto Naskh Arabic',
-                        textStyle: TextStyle(color: textColor, fontSize: 14.sp),
-                      ),
+                      style: TextApp.style(color: textColor, fontSize: 14.sp),
                       decoration: InputDecoration(
                         hintText: 'ابحث عن سورة...',
-                        hintStyle: GoogleFonts.getFont(
-                          'Noto Naskh Arabic',
-                          textStyle: TextStyle(
-                            color: textColor.withValues(alpha: 0.5),
-                            fontSize: 14.sp,
-                          ),
+                        hintStyle: TextApp.style(
+                          color: textColor.withValues(alpha: 0.5),
+                          fontSize: 14.sp,
                         ),
                         prefixIcon: Icon(
                           Icons.search,
@@ -88,81 +81,22 @@ class MushafView extends GetView<MushafController> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 12.h),
-                  // Filters Row
-                  Obx(() {
-                    final activeMode = controller.filterMode.value;
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildFilterButton(
-                          'السور',
-                          activeMode == MushafFilterMode.surah,
-                          goldColor,
-                          isDark,
-                          () => controller.filterMode.value =
-                              MushafFilterMode.surah,
-                        ),
-                        SizedBox(width: 8.w),
-                        _buildFilterButton(
-                          'حسب الجزء',
-                          activeMode == MushafFilterMode.juz,
-                          goldColor,
-                          isDark,
-                          () => controller.filterMode.value =
-                              MushafFilterMode.juz,
-                        ),
-                        SizedBox(width: 8.w),
-                        _buildFilterButton(
-                          'حسب الصفحة',
-                          activeMode == MushafFilterMode.page,
-                          goldColor,
-                          isDark,
-                          () => controller.filterMode.value =
-                              MushafFilterMode.page,
-                        ),
-                      ],
-                    );
-                  }),
                 ],
               ),
             ),
 
-            // Index Display based on Filter Mode (Reactive using Obx)
+            // Index Display (Reactive using Obx to update on search query changes)
             Expanded(
               child: Obx(() {
-                final activeMode = controller.filterMode.value;
-                if (activeMode == MushafFilterMode.surah) {
-                  return _buildSurahIndex(
-                    context,
-                    isDark,
-                    textColor,
-                    primaryColor,
-                    goldColor,
-                    outlineColor,
-                    cardBackgroundColor,
-                  );
-                } else if (activeMode == MushafFilterMode.juz) {
-                  return _buildJuzIndex(
-                    context,
-                    isDark,
-                    textColor,
-                    primaryColor,
-                    goldColor,
-                    outlineColor,
-                    cardBackgroundColor,
-                  );
-                } else {
-                  return _buildPageIndex(
-                    context,
-                    isDark,
-                    textColor,
-                    primaryColor,
-                    goldColor,
-                    outlineColor,
-                    cardBackgroundColor,
-                  );
-                }
+                return _buildSurahIndex(
+                  context,
+                  isDark,
+                  textColor,
+                  primaryColor,
+                  goldColor,
+                  outlineColor,
+                  cardBackgroundColor,
+                );
               }),
             ),
           ],
@@ -171,38 +105,6 @@ class MushafView extends GetView<MushafController> {
     );
   }
 
-  Widget _buildFilterButton(
-    String label,
-    bool isActive,
-    Color goldColor,
-    bool isDark,
-    VoidCallback onTap,
-  ) {
-    return InkWell(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      borderRadius: BorderRadius.circular(24.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          color: isActive ? goldColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(24.r),
-          border: Border.all(
-            color: goldColor.withValues(alpha: 0.4),
-            width: 1.w,
-          ),
-        ),
-        child: TextApp(
-          text: label,
-          color: isActive ? Colors.white : goldColor,
-          fontSize: 13.sp,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
 
   Widget _buildSurahIndex(
     BuildContext context,
@@ -334,148 +236,6 @@ class MushafView extends GetView<MushafController> {
     );
   }
 
-  Widget _buildJuzIndex(
-    BuildContext context,
-    bool isDark,
-    Color textColor,
-    Color primaryColor,
-    Color goldColor,
-    Color outlineColor,
-    Color cardBackgroundColor,
-  ) {
-    return ListView.builder(
-      physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingMarginMobile.w),
-      itemCount: controller.juzs.length,
-      itemBuilder: (context, index) {
-        final juz = controller.juzs[index];
-        final juzNum = juz['juz'] as int;
-
-        return Container(
-          margin: EdgeInsets.only(bottom: 12.h),
-          decoration: BoxDecoration(
-            color: cardBackgroundColor,
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: outlineColor, width: 1.w),
-            boxShadow: AppTheme.shadowSm,
-          ),
-          child: ListTile(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              Get.toNamed(
-                Routes.mushafReader,
-                arguments: {
-                  'id': juz['surahId'],
-                  'name': juz['surahName'],
-                  'initialAyahIndex': juz['ayahIndex'],
-                },
-              );
-            },
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.w,
-              vertical: 8.h,
-            ),
-            leading: Container(
-              width: 42.w,
-              height: 42.w,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: goldColor.withValues(alpha: 0.08),
-              ),
-              child: Center(
-                child: TextApp(
-                  text: _toArabicNumber(juzNum),
-
-                  color: primaryColor,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            title: TextApp(
-              text: 'الجزء ${_toArabicNumber(juzNum)}',
-              color: primaryColor,
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-            ),
-            subtitle: Padding(
-              padding: EdgeInsets.only(top: 4.h),
-              child: TextApp(
-                text: 'يبدأ من سورة ${juz['surahName']}',
-                color: textColor.withValues(alpha: 0.6),
-                fontSize: 12.sp,
-              ),
-            ),
-            trailing: TextApp(
-              text: 'صفحة ${_toArabicNumber(juz['page'])}',
-              color: goldColor,
-              fontSize: 12.sp,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildPageIndex(
-    BuildContext context,
-    bool isDark,
-    Color textColor,
-    Color primaryColor,
-    Color goldColor,
-    Color outlineColor,
-    Color cardBackgroundColor,
-  ) {
-    return GridView.builder(
-      physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingMarginMobile.w),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 5,
-        crossAxisSpacing: 10.w,
-        mainAxisSpacing: 10.h,
-        childAspectRatio: 1.0,
-      ),
-      itemCount: 604,
-      itemBuilder: (context, index) {
-        final pageNum = index + 1;
-        return InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            final surahMap = controller.getSurahForPage(pageNum);
-            Get.toNamed(
-              Routes.mushafReader,
-              arguments: {
-                'id': surahMap['id'],
-                'name': surahMap['name'],
-                'initialAyahIndex': surahMap['initialAyahIndex'],
-              },
-            );
-          },
-          borderRadius: BorderRadius.circular(8.r),
-          child: Container(
-            decoration: BoxDecoration(
-              color: cardBackgroundColor,
-              borderRadius: BorderRadius.circular(8.r),
-              border: Border.all(color: outlineColor, width: 1.w),
-            ),
-            child: Center(
-              child: Text(
-                _toArabicNumber(pageNum),
-                style: GoogleFonts.inter(
-                  textStyle: TextStyle(
-                    color: primaryColor,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   String _toArabicNumber(int number) {
     const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];

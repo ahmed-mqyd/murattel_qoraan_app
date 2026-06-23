@@ -8,9 +8,17 @@ import 'package:murattel_qoraan_app/core/routes/app_pages.dart';
 import 'package:murattel_qoraan_app/core/bindings/initial_binding.dart';
 import 'package:murattel_qoraan_app/core/notification_services/notification_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:just_audio_background/just_audio_background.dart';
   
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize background audio playback service
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.ahmdmqyd.murattelqoraan.channel.audio',
+    androidNotificationChannelName: 'تلاوة القرآن الكريم',
+    androidNotificationOngoing: true,
+  );
   
   // Initialize SharedPreferences and register it for DI
   final prefs = await SharedPreferences.getInstance();
@@ -43,9 +51,11 @@ class MyApp extends StatelessWidget {
           return GetMaterialApp(
             title: 'Murattel Quraan',
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
+            theme: themeController.themeModeString == 'sepia'
+                ? AppTheme.sepiaTheme
+                : AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
-            themeMode: themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            themeMode: themeController.themeMode,
             locale: const Locale('ar'),
             supportedLocales: const [Locale('ar')],
             localizationsDelegates: const [

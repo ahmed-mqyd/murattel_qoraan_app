@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:murattel_qoraan_app/core/text_app/text_app.dart';
 
 class AppColors {
   // Light Theme Color Palette (Adopting the Visual Identity: Emerald & Gold)
@@ -236,7 +237,7 @@ class AppTheme {
   // Base Typography - Combined Noto Serif & Noto Naskh Arabic for bilingual support
   static TextStyle get displayLg => GoogleFonts.notoSerif(
     textStyle: GoogleFonts.getFont(
-      'Noto Naskh Arabic',
+      TextApp.arabicFontFamily,
       fontSize: 48,
       fontWeight: FontWeight.w700,
       height: 60 / 48,
@@ -246,7 +247,7 @@ class AppTheme {
 
   static TextStyle get headlineLg => GoogleFonts.notoSerif(
     textStyle: GoogleFonts.getFont(
-      'Noto Naskh Arabic',
+      TextApp.arabicFontFamily,
       fontSize: 32,
       fontWeight: FontWeight.w600,
       height: 40 / 32,
@@ -255,7 +256,7 @@ class AppTheme {
 
   static TextStyle get headlineLgMobile => GoogleFonts.notoSerif(
     textStyle: GoogleFonts.getFont(
-      'Noto Naskh Arabic',
+      TextApp.arabicFontFamily,
       fontSize: 24,
       fontWeight: FontWeight.w600,
       height: 32 / 24,
@@ -264,7 +265,7 @@ class AppTheme {
 
   static TextStyle get titleMd => GoogleFonts.notoSerif(
     textStyle: GoogleFonts.getFont(
-      'Noto Naskh Arabic',
+      TextApp.arabicFontFamily,
       fontSize: 20,
       fontWeight: FontWeight.w500,
       height: 28 / 20,
@@ -273,7 +274,7 @@ class AppTheme {
 
   static TextStyle get bodyLg => GoogleFonts.notoSerif(
     textStyle: GoogleFonts.getFont(
-      'Noto Naskh Arabic',
+      TextApp.arabicFontFamily,
       fontSize: 18,
       fontWeight: FontWeight.w400,
       height: 32 / 18,
@@ -282,7 +283,7 @@ class AppTheme {
 
   static TextStyle get bodyMd => GoogleFonts.notoSerif(
     textStyle: GoogleFonts.getFont(
-      'Noto Naskh Arabic',
+      TextApp.arabicFontFamily,
       fontSize: 16,
       fontWeight: FontWeight.w400,
       height: 28 / 16,
@@ -304,7 +305,7 @@ class AppTheme {
 
   // Dedicated Quran text style using primary Noto Naskh Arabic
   static TextStyle get quranText => GoogleFonts.getFont(
-    'Noto Naskh Arabic',
+    TextApp.arabicFontFamily,
     fontSize: 28,
     fontWeight: FontWeight.w400,
     height: 2.0, // 200%
@@ -421,6 +422,64 @@ class AppTheme {
           surfaceContainerHigh: AppColors.surfaceContainerHighDark,
           surfaceContainerHighest: AppColors.surfaceContainerHighestDark,
           quranTextStyle: quranText.copyWith(color: AppColors.onSurfaceDark),
+        ),
+      ],
+    );
+  }
+
+  // Sepia (Warm Paper) Theme
+  static ThemeData get sepiaTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      primaryColor: const Color(0xFF5D4037),
+      scaffoldBackgroundColor: const Color(0xFFF4ECD8),
+      colorScheme: const ColorScheme(
+        brightness: Brightness.light,
+        primary: Color(0xFF5D4037),
+        onPrimary: Colors.white,
+        primaryContainer: Color(0xFF4E342E),
+        onPrimaryContainer: Color(0xFFD7CCC8),
+        inversePrimary: Color(0xFFD7CCC8),
+        secondary: Color(0xFFC5A059),
+        onSecondary: Colors.white,
+        secondaryContainer: Color(0xFFFAF4E8),
+        onSecondaryContainer: Color(0xFF5D4037),
+        tertiary: Color(0xFF8C7A5B),
+        onTertiary: Colors.white,
+        tertiaryContainer: Color(0xFFFAF4E8),
+        onTertiaryContainer: Color(0xFF8C7A5B),
+        error: AppColors.errorLight,
+        onError: AppColors.onErrorLight,
+        errorContainer: AppColors.errorContainerLight,
+        onErrorContainer: AppColors.onErrorContainerLight,
+        surface: Color(0xFFFAF4E8),
+        onSurface: Color(0xFF3E2723),
+        surfaceContainerHighest: Color(0xFFFAF4E8),
+        onSurfaceVariant: Color(0xFF8C7A5B),
+        outline: Color(0xFF8C7A5B),
+        outlineVariant: Color(0xFFD7CCC8),
+        surfaceTint: Color(0xFF5D4037),
+      ),
+      textTheme: TextTheme(
+        displayLarge: displayLg.copyWith(color: const Color(0xFF3E2723)),
+        headlineLarge: headlineLg.copyWith(color: const Color(0xFF3E2723)),
+        titleMedium: titleMd.copyWith(color: const Color(0xFF3E2723)),
+        bodyLarge: bodyLg.copyWith(color: const Color(0xFF3E2723)),
+        bodyMedium: bodyMd.copyWith(color: const Color(0xFF3E2723)),
+        labelMedium: labelMd.copyWith(color: const Color(0xFF3E2723)),
+        labelSmall: labelSm.copyWith(color: const Color(0xFF3E2723)),
+      ),
+      extensions: [
+        AppThemeExtension(
+          surfaceDim: const Color(0xFFEFE6D0),
+          surfaceBright: const Color(0xFFFAF4E8),
+          surfaceContainerLowest: const Color(0xFFFFFDF9),
+          surfaceContainerLow: const Color(0xFFFAF4E8),
+          surfaceContainer: const Color(0xFFF5EFE0),
+          surfaceContainerHigh: const Color(0xFFEFE6D0),
+          surfaceContainerHighest: const Color(0xFFE5DBC4),
+          quranTextStyle: quranText.copyWith(color: const Color(0xFF3E2723)),
         ),
       ],
     );

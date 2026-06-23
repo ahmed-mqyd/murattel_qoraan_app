@@ -1,18 +1,19 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../home_screen/controller/home_controller.dart';
 import '../../suluk_screen/controller/suluk_controller.dart';
 
 class HifzController extends GetxController {
   // مفتاح Gemini AI المقدم
   final String _apiKey = 'AQ.Ab8RN6JvhKgZRgVaxgL_B7r00prHb2JcqzPUgUI7_IKkEnDaMw'; 
-  final String _apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+  final String _apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
   final AudioRecorder _audioRecorder = AudioRecorder();
   
@@ -22,10 +23,16 @@ class HifzController extends GetxController {
   final RxBool hasResult = false.obs;
   
   final RxDouble score = 0.0.obs;
-  final RxString surahName = 'سورة الفاتحة'.obs;
+  final RxString surahName = 'سورة الفَاتِحَة'.obs;
   final RxString ayahRange = '١ - ٧'.obs;
   final RxList<EvaluationWord> evaluationWords = <EvaluationWord>[].obs;
   final RxList<String> tips = <String>[].obs;
+  final RxString transcription = ''.obs;
+  
+  // التعرف اللحظي على الكلام (Speech to Text)
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  final RxString liveText = ''.obs;
+  final RxBool isSpeechAvailable = false.obs;
 
   // تحديد الآيات للتسميع
   final RxInt startAyah = 1.obs;
@@ -162,6 +169,19 @@ class HifzController extends GetxController {
     startAyah.value = 1;
     endAyah.value = 7;
     updateRange();
+    initSpeech();
+  }
+
+  Future<void> initSpeech() async {
+    try {
+      bool available = await _speech.initialize(
+        onStatus: (status) => debugPrint('Speech status: $status'),
+        onError: (error) => debugPrint('Speech error: $error'),
+      );
+      isSpeechAvailable.value = available;
+    } catch (e) {
+      debugPrint('Speech init failed: $e');
+    }
   }
 
   @override
@@ -175,13 +195,17 @@ class HifzController extends GetxController {
     isRecording.value = false;
     isLoading.value = false;
     score.value = 0.0;
+    transcription.value = '';
+    liveText.value = '';
     evaluationWords.clear();
     tips.clear();
   }
 
   void selectSurah(String name) {
-    final searchName = name.replaceFirst('سورة ', '').trim();
-    final meta = rawSurahs.firstWhere((element) => element['name'] == searchName);
+    final searchName = _stripTashkeel(name.replaceFirst('سورة ', '').trim());
+    final meta = rawSurahs.firstWhere(
+      (element) => _stripTashkeel(element['name'] as String) == searchName,
+    );
     surahName.value = name;
     totalVerses.value = meta['verses'] as int;
     startAyah.value = 1;
@@ -192,6 +216,31 @@ class HifzController extends GetxController {
 
   void updateRange() {
     ayahRange.value = _toArabicRange('${startAyah.value}-${endAyah.value}');
+  }
+
+  void nextAyahRange() {
+    if (endAyah.value >= totalVerses.value) {
+      Get.snackbar(
+        'مرتل القرآن',
+        'لقد وصلت لنهاية السورة',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFF003527),
+        colorText: Colors.white,
+      );
+      return;
+    }
+    
+    final currentRangeSize = endAyah.value - startAyah.value + 1;
+    final int nextStart = endAyah.value + 1;
+    int nextEnd = nextStart + currentRangeSize - 1;
+    if (nextEnd > totalVerses.value) {
+      nextEnd = totalVerses.value;
+    }
+    
+    startAyah.value = nextStart;
+    endAyah.value = nextEnd;
+    updateRange();
+    reset();
   }
 
   String _toArabicRange(String input) {
@@ -209,12 +258,59 @@ class HifzController extends GetxController {
     try {
       if (await _audioRecorder.hasPermission()) {
         final directory = await getApplicationDocumentsDirectory();
-        _audioPath = '${directory.path}/recitation_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        _audioPath = '${directory.path}/recitation_${DateTime.now().millisecondsSinceEpoch}.wav';
         
-        const config = RecordConfig();
+        const config = RecordConfig(
+          encoder: AudioEncoder.wav,
+          sampleRate: 16000,
+          numChannels: 1,
+        );
         await _audioRecorder.start(config, path: _audioPath!);
         isRecording.value = true;
         hasResult.value = false;
+        liveText.value = '';
+
+        // Start live transcription
+        if (isSpeechAvailable.value) {
+          await _speech.listen(
+            onResult: (result) {
+              liveText.value = result.recognizedWords;
+            },
+            listenOptions: stt.SpeechListenOptions(
+              localeId: 'ar-EG', // Arabic Egyptian/Saudi/General
+              listenFor: const Duration(minutes: 5),
+              pauseFor: const Duration(seconds: 10),
+              cancelOnError: false,
+              partialResults: true,
+            ),
+          );
+        } else {
+          // Attempt to re-initialize if not ready
+          bool available = await _speech.initialize();
+          isSpeechAvailable.value = available;
+          if (available) {
+            await _speech.listen(
+              onResult: (result) {
+                liveText.value = result.recognizedWords;
+              },
+              listenOptions: stt.SpeechListenOptions(
+                localeId: 'ar-EG',
+                listenFor: const Duration(minutes: 5),
+                pauseFor: const Duration(seconds: 10),
+                cancelOnError: false,
+                partialResults: true,
+              ),
+            );
+          }
+        }
+      } else {
+        Get.snackbar(
+          'صلاحية الميكروفون',
+          'يرجى تفعيل صلاحية الميكروفون من إعدادات الهاتف لتتمكن من التسميع.',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color(0xFFBA1A1A),
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
       Get.snackbar('خطأ', 'فشل في بدء التسجيل: $e');
@@ -225,6 +321,9 @@ class HifzController extends GetxController {
   Future<void> stopRecording() async {
     try {
       final path = await _audioRecorder.stop();
+      if (isSpeechAvailable.value) {
+        await _speech.stop();
+      }
       isRecording.value = false;
       if (path != null) {
         isLoading.value = true;
@@ -236,6 +335,18 @@ class HifzController extends GetxController {
         final file = File(path);
         if (await file.exists()) {
           final bytes = await file.readAsBytes();
+          if (bytes.isEmpty || bytes.length < 1000) {
+            Get.snackbar(
+              'مرتل القرآن',
+              'الملف الصوتي فارغ أو قصير جداً. يرجى التحدث بوضوح والتأكد من تفعيل صلاحية الميكروفون (شائع على محاكيات الهواتف).',
+              snackPosition: SnackPosition.TOP,
+              backgroundColor: const Color(0xFFBA1A1A),
+              colorText: Colors.white,
+              duration: const Duration(seconds: 5),
+            );
+            isLoading.value = false;
+            return;
+          }
           final base64Audio = base64Encode(bytes);
           
           // 3. Call Gemini API for evaluation
@@ -247,6 +358,14 @@ class HifzController extends GetxController {
       }
     } catch (e) {
       debugPrint('Error stopping recording: $e');
+      Get.snackbar(
+        'مرتل القرآن',
+        'حدث خطأ في معالجة التسجيل، تم عرض نموذج توضيحي للنتائج.',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFFBA1A1A).withValues(alpha: 0.9),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+      );
       _showMockData();
       hasResult.value = true;
       isLoading.value = false;
@@ -254,8 +373,10 @@ class HifzController extends GetxController {
   }
 
   Future<String> _fetchCorrectTextApp(  ) async {
-    final searchName = surahName.value.replaceFirst('سورة ', '').trim();
-    final meta = rawSurahs.firstWhere((element) => element['name'] == searchName);
+    final searchName = _stripTashkeel(surahName.value.replaceFirst('سورة ', '').trim());
+    final meta = rawSurahs.firstWhere(
+      (element) => _stripTashkeel(element['name'] as String) == searchName,
+    );
     final surahId = meta['id'];
     
     final url = Uri.parse('https://api.alquran.cloud/v1/surah/$surahId/quran-uthmani');
@@ -286,6 +407,7 @@ class HifzController extends GetxController {
       Provide your response in JSON format matching this schema:
       {
         "score": 0-100 score,
+        "transcription": "Arabic transcription of what the user recited (exactly as they pronounced it)",
         "words": [
           {"text": "word from target text", "isCorrect": true/false}
         ],
@@ -295,58 +417,177 @@ class HifzController extends GetxController {
       Ensure every word from the target text is mapped in the "words" array in correct order.
       ''';
 
-      final response = await http.post(
-        Uri.parse('$_apiUrl?key=$_apiKey'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'contents': [
-            {
-              'parts': [
+      http.Response? response;
+      int maxRetries = 3;
+      int retryCount = 0;
+      int delaySeconds = 2;
+
+      while (retryCount < maxRetries) {
+        try {
+          response = await http.post(
+            Uri.parse('$_apiUrl?key=$_apiKey'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'contents': [
                 {
-                  'inlineData': {
-                    'mimeType': 'audio/mp4',
-                    'data': base64Audio
-                  }
-                },
-                {
-                  'text': prompt
+                  'parts': [
+                    {
+                      'inlineData': {
+                        'mimeType': 'audio/wav',
+                        'data': base64Audio
+                      }
+                    },
+                    {
+                      'text': prompt
+                    }
+                  ]
                 }
-              ]
+              ],
+              'generationConfig': {
+                'responseMimeType': 'application/json',
+                'responseSchema': {
+                  'type': 'OBJECT',
+                  'properties': {
+                    'score': {
+                      'type': 'INTEGER',
+                    },
+                    'transcription': {
+                      'type': 'STRING',
+                    },
+                    'words': {
+                      'type': 'ARRAY',
+                      'items': {
+                        'type': 'OBJECT',
+                        'properties': {
+                          'text': {
+                            'type': 'STRING',
+                          },
+                          'isCorrect': {
+                            'type': 'BOOLEAN',
+                          },
+                        },
+                        'required': ['text', 'isCorrect'],
+                      },
+                    },
+                    'tips': {
+                      'type': 'ARRAY',
+                      'items': {
+                        'type': 'STRING',
+                      },
+                    },
+                  },
+                  'required': ['score', 'transcription', 'words', 'tips'],
+                },
+              }
+            }),
+          ).timeout(const Duration(seconds: 15));
+
+          if (response.statusCode == 200) {
+            break; // Success
+          } else if (response.statusCode == 503 || response.statusCode == 429) {
+            retryCount++;
+            if (retryCount < maxRetries) {
+              debugPrint('Gemini API returned ${response.statusCode}. Retrying in $delaySeconds seconds (attempt $retryCount/$maxRetries)...');
+              await Future.delayed(Duration(seconds: delaySeconds));
+              delaySeconds *= 2;
             }
-          ],
-          'generationConfig': {
-            'responseMimeType': 'application/json'
+          } else {
+            break; // Non-retryable error status code
           }
-        }),
-      );
+        } catch (e) {
+          retryCount++;
+          if (retryCount < maxRetries) {
+            debugPrint('Gemini API request failed: $e. Retrying in $delaySeconds seconds (attempt $retryCount/$maxRetries)...');
+            await Future.delayed(Duration(seconds: delaySeconds));
+            delaySeconds *= 2;
+          } else {
+            rethrow;
+          }
+        }
+      }
+
+      if (response == null) {
+        throw Exception('فشل التوصيل بالخادم، لم يتم الحصول على استجابة.');
+      }
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        String resultText = data['candidates'][0]['content']['parts'][0]['text'];
+        final candidates = data['candidates'] as List?;
+        if (candidates == null || candidates.isEmpty) {
+          throw Exception('استجابة خالية من خوادم التقييم الذكي.');
+        }
         
+        final content = candidates[0]['content'];
+        if (content == null) {
+          throw Exception('تم حظر المحتوى أو لم يتم توليد رد من الخادم.');
+        }
+        
+        final parts = content['parts'] as List?;
+        if (parts == null || parts.isEmpty) {
+          throw Exception('استجابة خالية في أجزاء النص.');
+        }
+        
+        String resultText = parts[0]['text'] as String? ?? '';
         resultText = resultText.replaceAll('```json', '').replaceAll('```', '').trim();
         
         final jsonResult = jsonDecode(resultText);
         
-        score.value = (jsonResult['score'] as num).toDouble();
-        tips.value = List<String>.from(jsonResult['tips']);
+        final double parsedScore = (jsonResult['score'] as num?)?.toDouble() ?? 0.0;
+        final String parsedTranscription = jsonResult['transcription'] as String? ?? '';
+        final List<String> parsedTips = jsonResult['tips'] != null 
+            ? List<String>.from(jsonResult['tips']) 
+            : <String>[];
+            
+        final List<EvaluationWord> parsedWords = <EvaluationWord>[];
+        if (jsonResult['words'] != null) {
+          for (var w in (jsonResult['words'] as List)) {
+            parsedWords.add(EvaluationWord(
+              text: (w['text'] as String?) ?? '',
+              isCorrect: (w['isCorrect'] as bool?) ?? false,
+            ));
+          }
+        }
         
-        evaluationWords.value = (jsonResult['words'] as List).map((w) => EvaluationWord(
-          text: w['text'] as String,
-          isCorrect: w['isCorrect'] as bool
-        )).toList();
-        
+        score.value = parsedScore;
+        transcription.value = parsedTranscription;
+        tips.value = parsedTips;
+        evaluationWords.value = parsedWords;
         hasResult.value = true;
         
         // Track the recited verses if the score is passing (>= 75%)
         if (score.value >= 75.0) {
           _trackRecitedVerses();
+          _saveHifzSessionStats(score.value);
         }
       } else {
-        throw Exception('API error: ${response.statusCode}');
+        debugPrint('Gemini API Error: Status ${response.statusCode}, Body: ${response.body}');
+        throw Exception('فشل الاتصال بالخادم: رمز الحالة ${response.statusCode}');
       }
     } catch (e) {
       debugPrint('AI Evaluation Error: $e');
+      
+      String friendlyMessage = 'حدث خطأ غير متوقع أثناء معالجة التقييم.';
+      final errStr = e.toString();
+      if (errStr.contains('503')) {
+        friendlyMessage = 'خوادم التقييم الذكي مزدحمة حالياً نتيجة للطلب المرتفع. تم عرض نموذج نتائج توضيحي، يرجى إعادة المحاولة بعد ثوانٍ.';
+      } else if (errStr.contains('429')) {
+        friendlyMessage = 'تم تجاوز عدد الطلبات المسموح بها مؤقتاً. تم عرض نموذج نتائج توضيحي، يرجى المحاولة بعد قليل.';
+      } else if (errStr.contains('TimeoutException') || errStr.contains('SocketException')) {
+        friendlyMessage = 'يبدو أن هناك مشكلة أو بطء في اتصال الإنترنت لديك. تم عرض نموذج نتائج توضيحي.';
+      } else if (errStr.contains('استجابة خالية')) {
+        friendlyMessage = 'لم يتم الكشف عن صوت واضح في التسجيل (شائع على محاكي الآيفون لعدم اتصال الميكروفون). تم عرض نتائج تجريبية لتوضيح التجربة.';
+      } else {
+        friendlyMessage = 'فشل الاتصال بالذكاء الاصطناعي: $friendlyMessage (الرمز: $e)';
+      }
+
+      Get.snackbar(
+        'مرتل القرآن',
+        friendlyMessage,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFFBA1A1A).withValues(alpha: 0.9),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 6),
+      );
       _showMockData();
       hasResult.value = true;
     } finally {
@@ -436,6 +677,32 @@ class HifzController extends GetxController {
         prefs.setString(lastReadDateKey, todayStr);
       }
     }
+  }
+
+  void _saveHifzSessionStats(double sessionScore) {
+    try {
+      final prefs = Get.find<SharedPreferences>();
+      // زيادة عداد الجلسات
+      final sessions = (prefs.getInt('hifz_sessions_count') ?? 0) + 1;
+      prefs.setInt('hifz_sessions_count', sessions);
+      // تحديث أعلى نتيجة
+      final best = prefs.getDouble('hifz_best_score') ?? 0.0;
+      if (sessionScore > best) {
+        prefs.setDouble('hifz_best_score', sessionScore);
+      }
+      // تحديث SulukController وفحص الأوسمة
+      if (Get.isRegistered<SulukController>()) {
+        final suluk = Get.find<SulukController>();
+        suluk.loadStats();
+        suluk.checkAchievementsPublic();
+      }
+    } catch (e) {
+      debugPrint('Error saving hifz session stats: $e');
+    }
+  }
+
+  String _stripTashkeel(String input) {
+    return input.replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '');
   }
 }
 

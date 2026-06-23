@@ -21,6 +21,7 @@ import 'package:murattel_qoraan_app/screens/tasbeeh_screen/view/tasbeeh_view.dar
 import 'package:murattel_qoraan_app/screens/tasbeeh_screen/controller/tasbeeh_controller.dart';
 import 'package:murattel_qoraan_app/screens/wasiya_screen/view/wasiya_view.dart';
 import 'package:murattel_qoraan_app/screens/wasiya_screen/controller/wasiya_controller.dart';
+import 'package:murattel_qoraan_app/screens/suluk_screen/controller/khatmah_controller.dart';
 
 abstract class AppPages {
   static const initial = Routes.splash;
@@ -43,6 +44,7 @@ abstract class AppPages {
         Get.put(MushafController());
         Get.put(HifzController());
         Get.put(SulukController());
+        Get.put(KhatmahController());
         Get.put(SettingsController());
       }),
       transition: Transition.fade,
