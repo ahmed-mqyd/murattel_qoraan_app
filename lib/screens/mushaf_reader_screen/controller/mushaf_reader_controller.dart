@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/controllers/audio_controller.dart';
+import '../../../core/models/reciter.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../home_screen/controller/home_controller.dart';
 
@@ -56,7 +57,8 @@ class MushafReaderController extends GetxController {
   // Audio Playback states mapped to AudioController
   final isPlaying = false.obs;
   final isAudioLoading = false.obs;
-  final playingAyahIndex = (-1).obs; // 0-indexed index of the verse in the active surah
+  final playingAyahIndex =
+      (-1).obs; // 0-indexed index of the verse in the active surah
 
   StreamSubscription? _isPlayingSubscription;
   StreamSubscription? _isAudioLoadingSubscription;
@@ -100,10 +102,16 @@ class MushafReaderController extends GetxController {
     isPlaying.value = audioController.isPlaying.value;
     isAudioLoading.value = audioController.isAudioLoading.value;
 
-    _isPlayingSubscription = audioController.isPlaying.listen((val) => isPlaying.value = val);
-    _isAudioLoadingSubscription = audioController.isAudioLoading.listen((val) => isAudioLoading.value = val);
+    _isPlayingSubscription = audioController.isPlaying.listen(
+      (val) => isPlaying.value = val,
+    );
+    _isAudioLoadingSubscription = audioController.isAudioLoading.listen(
+      (val) => isAudioLoading.value = val,
+    );
 
-    _playingAyahIndexSubscription = audioController.playingAyahIndex.listen((index) {
+    _playingAyahIndexSubscription = audioController.playingAyahIndex.listen((
+      index,
+    ) {
       final reciterId = _getReciterId();
       final bool isFullSurah = AudioController.isFullSurahReciter(reciterId);
       if (isFullSurah) {
@@ -165,7 +173,9 @@ class MushafReaderController extends GetxController {
     try {
       if (_cachedQuranData == null) {
         // Load the full Quran text from assets
-        final String jsonString = await rootBundle.loadString('assets/quran.json');
+        final String jsonString = await rootBundle.loadString(
+          'assets/quran.json',
+        );
         _cachedQuranData = jsonDecode(jsonString) as List<dynamic>;
       }
 
@@ -176,10 +186,10 @@ class MushafReaderController extends GetxController {
 
       if (surah != null) {
         final List<dynamic> ayahs = surah['ayahs'];
-        
+
         // Populate arVerses
         arVerses.assignAll(ayahs);
-        
+
         // Populate enVerses (English translation mapped to 'text' key expected by the view)
         final List<dynamic> mappedEnVerses = ayahs.map((ayah) {
           return {
@@ -190,9 +200,9 @@ class MushafReaderController extends GetxController {
             'page': ayah['page'],
           };
         }).toList();
-        
+
         enVerses.assignAll(mappedEnVerses);
-        
+
         calculateScrollOffsets();
         isLoading.value = false;
         _scrollToBookmarkAfterInit();
@@ -210,7 +220,9 @@ class MushafReaderController extends GetxController {
           }
         }
       } else {
-        throw Exception('السورة المطلوبة غير موجودة في قاعدة البيانات المحلية.');
+        throw Exception(
+          'السورة المطلوبة غير موجودة في قاعدة البيانات المحلية.',
+        );
       }
     } catch (e) {
       debugPrint('Error loading offline Quran data: $e');
@@ -229,7 +241,8 @@ class MushafReaderController extends GetxController {
 
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final String cachePath = '${directory.path}/tafseer/ar.muyassar/surah_$surahId.json';
+      final String cachePath =
+          '${directory.path}/tafseer/ar.muyassar/surah_$surahId.json';
       final file = File(cachePath);
 
       if (await file.exists()) {
@@ -241,7 +254,13 @@ class MushafReaderController extends GetxController {
       }
 
       // If not cached, fetch from network
-      final response = await http.get(Uri.parse('https://api.alquran.cloud/v1/surah/$surahId/ar.muyassar')).timeout(const Duration(seconds: 15));
+      final response = await http
+          .get(
+            Uri.parse(
+              'https://api.alquran.cloud/v1/surah/$surahId/ar.muyassar',
+            ),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
@@ -249,25 +268,30 @@ class MushafReaderController extends GetxController {
           // Cache locally
           await file.parent.create(recursive: true);
           await file.writeAsString(response.body);
-          
+
           _parseAndSetTafseer(jsonResponse);
           isTafseerLoading.value = false;
         } else {
           throw Exception('استجابة غير صالحة من السيرفر');
         }
       } else {
-        throw Exception('فشل تحميل التفسير: رمز الحماية ${response.statusCode}');
+        throw Exception(
+          'فشل تحميل التفسير: رمز الحماية ${response.statusCode}',
+        );
       }
     } catch (e) {
       debugPrint('Error fetching Tafseer: $e');
-      tafseerError.value = 'لا يوجد اتصال بالإنترنت لعرض التفسير. يرجى الاتصال بالإنترنت والمحاولة مجدداً.';
+      tafseerError.value =
+          'لا يوجد اتصال بالإنترنت لعرض التفسير. يرجى الاتصال بالإنترنت والمحاولة مجدداً.';
       isTafseerLoading.value = false;
     }
   }
 
   void _parseAndSetTafseer(Map<String, dynamic> jsonMap) {
     final List<dynamic> ayahs = jsonMap['data']['ayahs'];
-    final List<String> texts = ayahs.map((ayah) => ayah['text'] as String).toList();
+    final List<String> texts = ayahs
+        .map((ayah) => ayah['text'] as String)
+        .toList();
     tafseerVerses.assignAll(texts);
   }
 
@@ -305,7 +329,7 @@ class MushafReaderController extends GetxController {
   Future<void> toggleBookmark(int ayahIndex) async {
     final prefs = Get.find<SharedPreferences>();
     final key = '$surahId-$ayahIndex';
-    
+
     if (favoriteAyahs.contains(key)) {
       favoriteAyahs.remove(key);
       Get.snackbar(
@@ -319,7 +343,7 @@ class MushafReaderController extends GetxController {
       favoriteAyahs.add(key);
       // Also save the surah name info for easy lookup later
       await prefs.setString('surah_name_$surahId', surahName);
-      
+
       Get.snackbar(
         'مرتل القرآن',
         'تم إضافة الآية إلى المفضلة بنجاح',
@@ -328,7 +352,7 @@ class MushafReaderController extends GetxController {
         colorText: Colors.white,
       );
     }
-    
+
     await prefs.setStringList('mushaf_favorites_list', favoriteAyahs.toList());
 
     if (Get.isRegistered<HomeController>()) {
@@ -344,7 +368,9 @@ class MushafReaderController extends GetxController {
   Future<void> togglePlayPause() async {
     if (audioController.playingSurahId.value != surahId) {
       await audioController.setupPlaylist(surahId, surahName, arVerses);
-      await audioController.playAyah(bookmarkedAyahIndex.value >= 0 ? bookmarkedAyahIndex.value : 0);
+      await audioController.playAyah(
+        bookmarkedAyahIndex.value >= 0 ? bookmarkedAyahIndex.value : 0,
+      );
     } else {
       await audioController.togglePlayPause();
     }
@@ -352,22 +378,7 @@ class MushafReaderController extends GetxController {
 
   String _getReciterId() {
     final prefs = Get.find<SharedPreferences>();
-    final reciterKey = prefs.getString('settings_selected_reciter') ?? 'alafasy';
-    switch (reciterKey) {
-      case 'abdulbasit':
-        return 'ar.abdulbasitmurattal';
-      case 'almuaiqly':
-        return 'ar.maheralmuaiqly';
-      case 'ghamdi':
-        return 'ar.saadghamidi';
-      case 'faresabbad':
-        return 'Fares_Abbad_64kbps';
-      case 'yasser':
-        return 'Yasser_Ad-Dussary_128kbps';
-      case 'alafasy':
-      default:
-        return 'ar.alafasy';
-    }
+    return Reciters.selected(prefs).audioId;
   }
 
   Future<String> _getLocalPathForAyah(int globalAyahNumber) async {
@@ -384,7 +395,7 @@ class MushafReaderController extends GetxController {
 
   Future<void> checkIfDownloaded() async {
     if (arVerses.isEmpty) return;
-    
+
     try {
       final reciterId = _getReciterId();
       final bool isFullSurah = AudioController.isFullSurahReciter(reciterId);
@@ -419,7 +430,7 @@ class MushafReaderController extends GetxController {
 
     final reciterId = _getReciterId();
     final bool isFullSurah = AudioController.isFullSurahReciter(reciterId);
-    
+
     try {
       final directory = await getApplicationDocumentsDirectory();
       final audioDir = Directory('${directory.path}/audio/$reciterId');
@@ -432,17 +443,22 @@ class MushafReaderController extends GetxController {
         final file = File(localPath);
 
         if (!await file.exists()) {
-          final urlString = AudioController.getSurahAudioUrl(reciterId, surahId);
-          
+          final urlString = AudioController.getSurahAudioUrl(
+            reciterId,
+            surahId,
+          );
+
           final client = http.Client();
           final request = http.Request('GET', Uri.parse(urlString));
-          final response = await client.send(request).timeout(const Duration(minutes: 5));
-          
+          final response = await client
+              .send(request)
+              .timeout(const Duration(minutes: 5));
+
           if (response.statusCode == 200) {
             final List<int> bytes = [];
             final int? contentLength = response.contentLength;
             int downloaded = 0;
-            
+
             await for (final List<int> chunk in response.stream) {
               if (!isDownloading.value) {
                 client.close();
@@ -472,13 +488,22 @@ class MushafReaderController extends GetxController {
           final file = File(localPath);
 
           if (!await file.exists()) {
-            final urlString = AudioController.getAudioUrl(reciterId, surahId, ayahNumberInSurah, globalAyahNumber);
-            final response = await http.get(Uri.parse(urlString)).timeout(const Duration(seconds: 15));
-            
+            final urlString = AudioController.getAudioUrl(
+              reciterId,
+              surahId,
+              ayahNumberInSurah,
+              globalAyahNumber,
+            );
+            final response = await http
+                .get(Uri.parse(urlString))
+                .timeout(const Duration(seconds: 15));
+
             if (response.statusCode == 200) {
               await file.writeAsBytes(response.bodyBytes);
             } else {
-              throw Exception('فشل تحميل الآية $globalAyahNumber: ${response.statusCode}');
+              throw Exception(
+                'فشل تحميل الآية $globalAyahNumber: ${response.statusCode}',
+              );
             }
           }
 
@@ -520,7 +545,7 @@ class MushafReaderController extends GetxController {
     try {
       final reciterId = _getReciterId();
       final bool isFullSurah = AudioController.isFullSurahReciter(reciterId);
-      
+
       int deletedCount = 0;
       if (isFullSurah) {
         final localPath = await _getLocalPathForSurah(surahId);
@@ -567,7 +592,8 @@ class MushafReaderController extends GetxController {
       playingAyahIndex.value = -1;
     } else {
       playingAyahIndex.value = index;
-      selectedAyahIndex.value = index; // Keep selection synced with active audio
+      selectedAyahIndex.value =
+          index; // Keep selection synced with active audio
       scrollToAyah(index);
     }
 
@@ -770,29 +796,120 @@ class MushafReaderController extends GetxController {
 
   /// قائمة أسماء السور الـ 114 — مرتبة حسب الرقم (index 0 = سورة 1)
   static const List<String> _surahNames = [
-    'الفَاتِحَة', 'البَقَرَة', 'آل عِمرَان', 'النِّسَاء', 'المَائِدَة',
-    'الأنعَام', 'الأعرَاف', 'الأنفَال', 'التَّوبَة', 'يُونُس',
-    'هُود', 'يُوسُف', 'الرَّعْد', 'إِبْرَاهِيم', 'الحِجْر',
-    'النَّحْل', 'الإِسْرَاء', 'الكَهْف', 'مَرْيَم', 'طه',
-    'الأَنْبِيَاء', 'الحَجّ', 'المُؤْمِنُون', 'النُّور', 'الفُرْقَان',
-    'الشُّعَرَاء', 'النَّمْل', 'القَصَص', 'العَنْكَبُوت', 'الرُّوم',
-    'لُقْمَان', 'السَّجْدَة', 'الأَحْزَاب', 'سَبَأ', 'فَاطِر',
-    'يس', 'الصَّافَّات', 'ص', 'الزُّمَر', 'غَافِر',
-    'فُصِّلَت', 'الشُّورَى', 'الزُّخْرُف', 'الدُّخَان', 'الجَاثِيَة',
-    'الأَحْقَاف', 'مُحَمَّد', 'الفَتْح', 'الحُجُرَات', 'ق',
-    'الذَّارِيَات', 'الطُّور', 'النَّجْم', 'القَمَر', 'الرَّحْمَن',
-    'الوَاقِعَة', 'الحَدِيد', 'المُجَادِلَة', 'الحَشْر', 'المُمْتَحَنَة',
-    'الصَّفّ', 'الجُمُعَة', 'المُنَافِقُون', 'التَّغَابُن', 'الطَّلَاق',
-    'التَّحْرِيم', 'المُلْك', 'القَلَم', 'الحَاقَّة', 'المَعَارِج',
-    'نُوح', 'الجِنّ', 'المُزَّمِّل', 'المُدَّثِّر', 'القِيَامَة',
-    'الإِنْسَان', 'المُرْسَلَات', 'النَّبَأ', 'النَّازِعَات', 'عَبَس',
-    'التَّكْوِير', 'الانْفِطَار', 'المُطَفِّفِين', 'الانْشِقَاق', 'البُرُوج',
-    'الطَّارِق', 'الأَعْلَى', 'الغَاشِيَة', 'الفَجْر', 'البَلَد',
-    'الشَّمْس', 'اللَّيْل', 'الضُّحَى', 'الشَّرْح', 'التِّين',
-    'العَلَق', 'القَدْر', 'البَيِّنَة', 'الزَّلْزَلَة', 'العَادِيَات',
-    'القَارِعَة', 'التَّكَاثُر', 'العَصْر', 'الهُمَزَة', 'الفِيل',
-    'قُرَيْش', 'المَاعُون', 'الكَوْثَر', 'الكَافِرُون', 'النَّصْر',
-    'المَسَد', 'الإِخْلَاص', 'الفَلَق', 'النَّاس',
+    'الفَاتِحَة',
+    'البَقَرَة',
+    'آل عِمرَان',
+    'النِّسَاء',
+    'المَائِدَة',
+    'الأنعَام',
+    'الأعرَاف',
+    'الأنفَال',
+    'التَّوبَة',
+    'يُونُس',
+    'هُود',
+    'يُوسُف',
+    'الرَّعْد',
+    'إِبْرَاهِيم',
+    'الحِجْر',
+    'النَّحْل',
+    'الإِسْرَاء',
+    'الكَهْف',
+    'مَرْيَم',
+    'طه',
+    'الأَنْبِيَاء',
+    'الحَجّ',
+    'المُؤْمِنُون',
+    'النُّور',
+    'الفُرْقَان',
+    'الشُّعَرَاء',
+    'النَّمْل',
+    'القَصَص',
+    'العَنْكَبُوت',
+    'الرُّوم',
+    'لُقْمَان',
+    'السَّجْدَة',
+    'الأَحْزَاب',
+    'سَبَأ',
+    'فَاطِر',
+    'يس',
+    'الصَّافَّات',
+    'ص',
+    'الزُّمَر',
+    'غَافِر',
+    'فُصِّلَت',
+    'الشُّورَى',
+    'الزُّخْرُف',
+    'الدُّخَان',
+    'الجَاثِيَة',
+    'الأَحْقَاف',
+    'مُحَمَّد',
+    'الفَتْح',
+    'الحُجُرَات',
+    'ق',
+    'الذَّارِيَات',
+    'الطُّور',
+    'النَّجْم',
+    'القَمَر',
+    'الرَّحْمَن',
+    'الوَاقِعَة',
+    'الحَدِيد',
+    'المُجَادِلَة',
+    'الحَشْر',
+    'المُمْتَحَنَة',
+    'الصَّفّ',
+    'الجُمُعَة',
+    'المُنَافِقُون',
+    'التَّغَابُن',
+    'الطَّلَاق',
+    'التَّحْرِيم',
+    'المُلْك',
+    'القَلَم',
+    'الحَاقَّة',
+    'المَعَارِج',
+    'نُوح',
+    'الجِنّ',
+    'المُزَّمِّل',
+    'المُدَّثِّر',
+    'القِيَامَة',
+    'الإِنْسَان',
+    'المُرْسَلَات',
+    'النَّبَأ',
+    'النَّازِعَات',
+    'عَبَس',
+    'التَّكْوِير',
+    'الانْفِطَار',
+    'المُطَفِّفِين',
+    'الانْشِقَاق',
+    'البُرُوج',
+    'الطَّارِق',
+    'الأَعْلَى',
+    'الغَاشِيَة',
+    'الفَجْر',
+    'البَلَد',
+    'الشَّمْس',
+    'اللَّيْل',
+    'الضُّحَى',
+    'الشَّرْح',
+    'التِّين',
+    'العَلَق',
+    'القَدْر',
+    'البَيِّنَة',
+    'الزَّلْزَلَة',
+    'العَادِيَات',
+    'القَارِعَة',
+    'التَّكَاثُر',
+    'العَصْر',
+    'الهُمَزَة',
+    'الفِيل',
+    'قُرَيْش',
+    'المَاعُون',
+    'الكَوْثَر',
+    'الكَافِرُون',
+    'النَّصْر',
+    'المَسَد',
+    'الإِخْلَاص',
+    'الفَلَق',
+    'النَّاس',
   ];
 
   /// الانتقال إلى السورة التالية (إذا لم تكن آخر سورة)
@@ -819,11 +936,7 @@ class MushafReaderController extends GetxController {
     // الانتقال إلى السورة الجديدة باستبدال الشاشة الحالية (offNamed)
     Get.offNamed(
       Routes.mushafReader,
-      arguments: {
-        'id': id,
-        'name': name,
-        'initialAyahIndex': -1,
-      },
+      arguments: {'id': id, 'name': name, 'initialAyahIndex': -1},
       preventDuplicates: false,
     );
   }

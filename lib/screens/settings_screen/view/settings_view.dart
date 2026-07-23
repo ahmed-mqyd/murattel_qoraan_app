@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:murattel_qoraan_app/core/text_app/text_app.dart';
 import 'package:murattel_qoraan_app/core/theme/app_theme.dart';
 import 'package:murattel_qoraan_app/core/images/images_const.dart';
+import 'package:murattel_qoraan_app/core/models/reciter.dart';
+import 'package:murattel_qoraan_app/core/routes/app_routes.dart';
 import 'package:murattel_qoraan_app/core/theme/theme_service.dart';
 import '../controller/settings_controller.dart';
 
@@ -46,9 +48,6 @@ class SettingsView extends GetView<SettingsController> {
                 textColor,
               ),
               SizedBox(height: 16.h),
-
-          
- 
 
               // 5.5. Daily Goal Card Section
               _buildDailyGoalCard(
@@ -283,7 +282,9 @@ class SettingsView extends GetView<SettingsController> {
                 fontSize: 14.sp,
               ),
               subtitle: TextApp(
-                text: _getReciterName(controller.selectedReciter.value),
+                text: Reciters.byKey(
+                  controller.selectedReciter.value,
+                ).arabicName,
                 color: goldColor,
                 fontSize: 12.sp,
                 fontWeight: FontWeight.bold,
@@ -298,6 +299,28 @@ class SettingsView extends GetView<SettingsController> {
               },
             );
           }),
+          const Divider(height: 1),
+          ListTile(
+            title: TextApp(
+              text: 'تحميل التلاوات',
+              color: textColor,
+              fontSize: 14.sp,
+            ),
+            subtitle: TextApp(
+              text: 'حمّل السور للاستماع دون اتصال بالإنترنت',
+              color: goldColor,
+              fontSize: 12.sp,
+              fontWeight: FontWeight.bold,
+            ),
+            trailing: Icon(
+              Icons.chevron_left,
+              color: textColor.withValues(alpha: 0.5),
+            ),
+            onTap: () {
+              HapticFeedback.selectionClick();
+              Get.toNamed(Routes.downloads);
+            },
+          ),
           const Divider(height: 1),
           Obx(() {
             return ListTile(
@@ -411,7 +434,9 @@ class SettingsView extends GetView<SettingsController> {
                           goldColor: goldColor,
                           textColor: textColor,
                           previewColor: const Color(0xFFF4ECD8),
-                          previewSubColor: const Color(0xFF3E2723).withValues(alpha: 0.15),
+                          previewSubColor: const Color(
+                            0xFF3E2723,
+                          ).withValues(alpha: 0.15),
                           onTap: () => themeController.setThemeMode('sepia'),
                         ),
                       ),
@@ -429,7 +454,9 @@ class SettingsView extends GetView<SettingsController> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12.r),
                               border: Border.all(
-                                color: activeMode == 'system' ? goldColor : Colors.transparent,
+                                color: activeMode == 'system'
+                                    ? goldColor
+                                    : Colors.transparent,
                                 width: 2.w,
                               ),
                               color: activeMode == 'system'
@@ -443,7 +470,9 @@ class SettingsView extends GetView<SettingsController> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(8.r),
                                     border: Border.all(
-                                      color: Colors.black.withValues(alpha: 0.05),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
                                     ),
                                   ),
                                   child: Row(
@@ -462,8 +491,11 @@ class SettingsView extends GetView<SettingsController> {
                                               width: 18.w,
                                               height: 4.h,
                                               decoration: BoxDecoration(
-                                                color: Colors.white.withValues(alpha: 0.2),
-                                                borderRadius: BorderRadius.circular(2.r),
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.2,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(2.r),
                                               ),
                                             ),
                                           ),
@@ -483,8 +515,11 @@ class SettingsView extends GetView<SettingsController> {
                                               width: 18.w,
                                               height: 4.h,
                                               decoration: BoxDecoration(
-                                                color: Colors.black.withValues(alpha: 0.1),
-                                                borderRadius: BorderRadius.circular(2.r),
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.1,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(2.r),
                                               ),
                                             ),
                                           ),
@@ -516,29 +551,6 @@ class SettingsView extends GetView<SettingsController> {
         ],
       ),
     );
-  }
-
-  String _getReciterName(String key) {
-    switch (key) {
-      case 'alafasy':
-        return 'مشاري راشد العفاسي';
-      case 'abdulbasit':
-        return 'عبد الباسط عبد الصمد';
-      case 'almuaiqly':
-        return 'ماهر المعيقلي';
-      case 'ghamdi':
-        return 'سعد الغامدي';
-      case 'faresabbad':
-        return 'فارس عباد';
-      case 'yasser':
-        return 'ياسر الدوسري';
-      case 'islamsobhi':
-        return 'إسلام صبحي';
-      case 'ahmedshafei':
-        return 'أحمد الشافعي';
-      default:
-        return '';
-    }
   }
 
   String _getQualityName(String key) {
@@ -590,17 +602,6 @@ class SettingsView extends GetView<SettingsController> {
   }
 
   void _showReciterDialog(BuildContext context) {
-    final reciters = [
-      {'key': 'alafasy', 'name': 'مشاري راشد العفاسي'},
-      {'key': 'abdulbasit', 'name': 'عبد الباسط عبد الصمد'},
-      {'key': 'almuaiqly', 'name': 'ماهر المعيقلي'},
-      {'key': 'ghamdi', 'name': 'سعد الغامدي'},
-      {'key': 'faresabbad', 'name': 'فارس عباد'},
-      {'key': 'yasser', 'name': 'ياسر الدوسري'},
-      {'key': 'islamsobhi', 'name': 'إسلام صبحي'},
-      {'key': 'ahmedshafei', 'name': 'أحمد الشافعي'},
-    ];
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -613,17 +614,26 @@ class SettingsView extends GetView<SettingsController> {
           ),
           content: SingleChildScrollView(
             child: Column(
-              children: reciters.map((reciter) {
-                return ListTile(
-                  title: TextApp(
-                    text: reciter['name']!,
-                    fontSize: 14.sp,
-                    textAlign: TextAlign.right,
+              // القائمة تُبنى من السجل المركزي — أي قارئ جديد يظهر هنا تلقائياً
+              children: Reciters.all.map((reciter) {
+                return Obx(
+                  () => ListTile(
+                    title: TextApp(
+                      text: reciter.arabicName,
+                      fontSize: 14.sp,
+                      textAlign: TextAlign.right,
+                    ),
+                    trailing: controller.selectedReciter.value == reciter.key
+                        ? const Icon(
+                            Icons.check_circle_rounded,
+                            color: Color(0xFFC5A059),
+                          )
+                        : null,
+                    onTap: () {
+                      controller.updateReciter(reciter.key);
+                      Navigator.of(context).pop();
+                    },
                   ),
-                  onTap: () {
-                    controller.updateReciter(reciter['key']!);
-                    Navigator.of(context).pop();
-                  },
                 );
               }).toList(),
             ),

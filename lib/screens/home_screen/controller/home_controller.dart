@@ -2,14 +2,20 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:murattel_qoraan_app/core/images/images_const.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:murattel_qoraan_app/screens/settings_screen/controller/settings_controller.dart';
 import 'package:murattel_qoraan_app/core/controllers/audio_controller.dart';
+import 'package:murattel_qoraan_app/core/models/reciter.dart';
 
 class HomeController extends GetxController {
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  // نستخدم AudioController المُشارك بدلاً من إنشاء AudioPlayer منفصل
+  AudioController get _audioCtrl => Get.find<AudioController>();
+  StreamSubscription<PlayerState>? _playerStateSub;
+  // هل تشغيل آية اليوم هو من يملك المشغّل المشترك حالياً؟
+  // يمنع تحديث حالتنا بناءً على تشغيل بدأته شاشة أخرى تستخدم نفس المشغّل.
+  bool _ownsPlayback = false;
   Timer? _moonTimer;
   final PageController moonPageController = PageController();
 
@@ -173,15 +179,20 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
 
-    _audioPlayer.playerStateStream.listen((state) {
+    // اشتراك واحد فقط طوال عمر الكنترولر (بدل الاشتراك من جديد في كل
+    // togglePlay)، ولا يُحدَّث إلا أثناء امتلاكنا فعلياً لتشغيل آية اليوم.
+    _playerStateSub = _audioCtrl.audioPlayer.playerStateStream.listen((state) {
+      if (!_ownsPlayback) return;
+
       isPlaying.value = state.playing;
-      
       final processingState = state.processingState;
-      isAudioLoading.value = processingState == ProcessingState.loading ||
-                           processingState == ProcessingState.buffering;
+      isAudioLoading.value =
+          processingState == ProcessingState.loading ||
+          processingState == ProcessingState.buffering;
 
       if (processingState == ProcessingState.completed) {
         isPlaying.value = false;
+        _ownsPlayback = false;
       }
     });
 
@@ -236,7 +247,7 @@ class HomeController extends GetxController {
 
   @override
   void onClose() {
-    _audioPlayer.dispose();
+    _playerStateSub?.cancel();
     _moonTimer?.cancel();
     moonPageController.dispose();
     super.onClose();
@@ -258,7 +269,7 @@ class HomeController extends GetxController {
 
   void loadFavorites() {
     final prefs = Get.find<SharedPreferences>();
-    
+
     // 1. Load Quran favorites
     final favAyahs = prefs.getStringList('mushaf_favorites_list') ?? [];
     final List<Map<String, dynamic>> parsedAyahs = [];
@@ -283,18 +294,24 @@ class HomeController extends GetxController {
     for (final text in favAzkar) {
       String category = 'morning';
       String categoryName = 'أذكار الصباح';
-      
-      if (text.contains('بِاسْمِكَ رَبِّي وَضَعْتُ جَنْبِي') || text.contains('قِنِي عَذَابَكَ') || text.contains('أَمُوتُ وَأَحْيَا')) {
+
+      if (text.contains('بِاسْمِكَ رَبِّي وَضَعْتُ جَنْبِي') ||
+          text.contains('قِنِي عَذَابَكَ') ||
+          text.contains('أَمُوتُ وَأَحْيَا')) {
         category = 'sleep';
         categoryName = 'أذكار النوم';
-      } else if (text.contains('أستغفر الله') || text.contains('السلام ومنك السلام') || text.contains('سبحان الله') || text.contains('الحمد لله') || text.contains('الله أكبر')) {
+      } else if (text.contains('أستغفر الله') ||
+          text.contains('السلام ومنك السلام') ||
+          text.contains('سبحان الله') ||
+          text.contains('الحمد لله') ||
+          text.contains('الله أكبر')) {
         category = 'after_prayer';
         categoryName = 'بعد الصلاة';
       } else if (text.contains('أَمْسَيْنَا وَأَمْسَى')) {
         category = 'evening';
         categoryName = 'أذكار المساء';
       }
-      
+
       parsedAzkar.add({
         'text': text,
         'category': category,
@@ -381,50 +398,40 @@ class HomeController extends GetxController {
   }
 
   Future<void> togglePlay() async {
+    final audioCtrl = _audioCtrl;
+
+    // إذا كان يُشغّل بالفعل، أوقف
     if (isPlaying.value) {
-      await _audioPlayer.pause();
+      _ownsPlayback = false;
+      await audioCtrl.audioPlayer.pause();
+      isPlaying.value = false;
       return;
     }
 
     isAudioLoading.value = true;
 
     final prefs = Get.find<SharedPreferences>();
-    final reciterKey =
-        prefs.getString('settings_selected_reciter') ?? 'alafasy';
-    String reciterId;
-    switch (reciterKey) {
-      case 'abdulbasit':
-        reciterId = 'ar.abdulbasitmurattal';
-        break;
-      case 'almuaiqly':
-        reciterId = 'ar.maheralmuaiqly';
-        break;
-      case 'ghamdi':
-        reciterId = 'ar.saadghamidi';
-        break;
-      case 'faresabbad':
-        reciterId = 'Fares_Abbad_64kbps';
-        break;
-      case 'yasser':
-        reciterId = 'Yasser_Ad-Dussary_128kbps';
-        break;
-      case 'alafasy':
-      default:
-        reciterId = 'ar.alafasy';
-        break;
+    var reciter = Reciters.selected(prefs);
+    // قرّاء السورة الكاملة لا يوفرون ملفات آية-بآية،
+    // فنشغّل آية اليوم بصوت القارئ الافتراضي بدلاً منهم
+    if (reciter.isFullSurah) {
+      reciter = Reciters.byKey(Reciters.defaultKey);
     }
 
     final urlString = AudioController.getAudioUrl(
-      reciterId,
+      reciter.audioId,
       dailyAyahSurahId.value,
       dailyAyahNumber.value,
       dailyAyahGlobalNumber.value,
     );
 
     try {
-      await _audioPlayer.setUrl(urlString);
-      _audioPlayer.play();
+      // تشغيل الآية مباشرةً عبر AudioPlayer الموجود في AudioController
+      _ownsPlayback = true;
+      await audioCtrl.audioPlayer.setUrl(urlString);
+      audioCtrl.audioPlayer.play();
     } catch (e) {
+      _ownsPlayback = false;
       isAudioLoading.value = false;
       isPlaying.value = false;
       Get.snackbar(
