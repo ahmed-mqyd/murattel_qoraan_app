@@ -18,8 +18,9 @@ class HifzController extends GetxController {
   // لا يوجد أي مفتاح داخل التطبيق، والتقييم الأساسي محلي بالكامل
   // ولا يتأثر إذا كان الرابط فارغاً أو الخادم غير متاح.
   static const String _tipsProxyUrl =
-      ''; // مثال: 'https://your-domain.com/api/hifz_tips_proxy.php'
-  static const String _tipsProxyToken = ''; // نفس قيمة APP_TOKEN في ملف الخادم
+      'https://murattel.bayader-almarefa.com/hifz_tips_proxy.php';
+  static const String _tipsProxyToken =
+      '8f768639007a370bd0d81e9beb7d70ea407ec63b677b2c70';
 
   // حالات الشاشة
   final RxBool isLoading = false.obs;
