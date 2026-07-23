@@ -50,7 +50,7 @@ class HifzView extends GetView<HifzController> {
                 TextApp(
                   text: controller.hasResult.value
                       ? 'تقرير نتائج التسميع المطور'
-                      : "التسميع الذكي",
+                      : 'التسميع الذكي',
                   color: primaryColor,
                   fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
@@ -154,7 +154,7 @@ class HifzView extends GetView<HifzController> {
           SizedBox(width: 12.w),
           Expanded(
             child: Text(
-              "اختر السورة للحفظ:",
+              'اختر السورة للحفظ:',
               style: GoogleFonts.notoKufiArabic(
                 fontSize: 14.sp,
                 color: textColor.withValues(alpha: 0.7),
@@ -223,7 +223,7 @@ class HifzView extends GetView<HifzController> {
                 ),
               ),
               Text(
-                "الآيات: ${controller.ayahRange.value}",
+                'الآيات: ${controller.ayahRange.value}',
                 style: GoogleFonts.notoKufiArabic(
                   fontSize: 14.sp,
                   color: textColor.withValues(alpha: 0.6),
@@ -268,8 +268,8 @@ class HifzView extends GetView<HifzController> {
               Obx(
                 () => Text(
                   controller.isRecording.value
-                      ? "جارِ الاستماع... اضغط للإيقاف"
-                      : "اضغط على الميكروفون وابدأ التسميع",
+                      ? 'جارِ الاستماع... اضغط للإيقاف'
+                      : 'اضغط على الميكروفون وابدأ التسميع',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.notoKufiArabic(
                     fontSize: 14.sp,
@@ -278,15 +278,36 @@ class HifzView extends GetView<HifzController> {
                 ),
               ),
               Obx(() {
-                if (!controller.isRecording.value || controller.liveText.value.isEmpty) {
+                if (!controller.speechInitFailed.value) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: EdgeInsets.only(top: 12.h),
+                  child: TextApp(
+                    text:
+                        'التعرف على الكلام غير مفعّل — تأكد من منح صلاحية الميكروفون من إعدادات الهاتف',
+                    color: const Color(0xFFBA1A1A),
+                    fontSize: 11.sp,
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              }),
+              Obx(() {
+                if (!controller.isRecording.value ||
+                    controller.liveText.value.isEmpty) {
                   return const SizedBox.shrink();
                 }
                 return Container(
                   margin: EdgeInsets.only(top: 24.h),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF00150F) : const Color(0xFFF7F5F0),
+                    color: isDark
+                        ? const Color(0xFF00150F)
+                        : const Color(0xFFF7F5F0),
                     borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(
                       color: goldColor.withValues(alpha: 0.25),
@@ -299,7 +320,11 @@ class HifzView extends GetView<HifzController> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.record_voice_over, color: Colors.red, size: 16),
+                          const Icon(
+                            Icons.record_voice_over,
+                            color: Colors.red,
+                            size: 16,
+                          ),
                           SizedBox(width: 6.w),
                           TextApp(
                             text: 'يتلو القارئ الآن:',
@@ -456,8 +481,10 @@ class HifzView extends GetView<HifzController> {
                 ),
                 children: words.map((word) {
                   final String wordText = word.text;
-                  final String displayText = wordText.endsWith(' ') ? wordText : '$wordText ';
-                  
+                  final String displayText = wordText.endsWith(' ')
+                      ? wordText
+                      : '$wordText ';
+
                   if (word.isCorrect) {
                     return TextSpan(text: displayText);
                   } else {
@@ -645,7 +672,7 @@ class HifzView extends GetView<HifzController> {
                 Row(
                   children: [
                     Text(
-                      "من الآية: ",
+                      'من الآية: ',
                       style: GoogleFonts.notoKufiArabic(
                         fontSize: 13.sp,
                         color: textColor.withValues(alpha: 0.7),
@@ -697,7 +724,7 @@ class HifzView extends GetView<HifzController> {
                 Row(
                   children: [
                     Text(
-                      "إلى الآية: ",
+                      'إلى الآية: ',
                       style: GoogleFonts.notoKufiArabic(
                         fontSize: 13.sp,
                         color: textColor.withValues(alpha: 0.7),
@@ -798,7 +825,9 @@ class HifzView extends GetView<HifzController> {
               textAlign: TextAlign.right,
               style: GoogleFonts.amiri(
                 textStyle: TextStyle(
-                  color: isDark ? Colors.white.withValues(alpha: 0.9) : textColor.withValues(alpha: 0.85),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.9)
+                      : textColor.withValues(alpha: 0.85),
                   fontSize: 20.sp,
                   height: 1.8,
                 ),
