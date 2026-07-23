@@ -32,6 +32,7 @@ class QiblaView extends GetView<QiblaController> {
         ? const Color(0xFFA0D1BC)
         : const Color(0xFF003527);
     final Color goldColor = const Color(0xFFC5A059);
+    final Color warningColor = const Color(0xFFDC6803);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -93,6 +94,7 @@ class QiblaView extends GetView<QiblaController> {
                     _buildStatusBanner(
                       primaryColor,
                       goldColor,
+                      warningColor,
                       textColor,
                       isDark,
                     ),
@@ -117,6 +119,7 @@ class QiblaView extends GetView<QiblaController> {
                       textColor,
                       primaryColor,
                       goldColor,
+                      warningColor,
                       isDark,
                     ),
                     SizedBox(height: 24.h),
@@ -131,41 +134,44 @@ class QiblaView extends GetView<QiblaController> {
                     ),
                     SizedBox(height: 24.h),
 
-                    // 5. Simulated Auto-rotate (demo purposes)
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        controller.toggleAutoRotate();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: controller.autoRotate.value
-                            ? goldColor
-                            : primaryColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24.r),
+                    // 5. دوران تلقائي تجريبي — بديل فقط عند غياب بوصلة حقيقية
+                    // (لو فيه بوصلة شغّالة فهي مصدر الحقيقة، وده هيتعارض معاها)
+                    if (!controller.hasRealCompassSensor.value) ...[
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          controller.toggleAutoRotate();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: controller.autoRotate.value
+                              ? goldColor
+                              : primaryColor,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24.r),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.w,
+                            vertical: 12.h,
+                          ),
                         ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 24.w,
-                          vertical: 12.h,
+                        icon: Icon(
+                          controller.autoRotate.value
+                              ? Icons.stop_rounded
+                              : Icons.play_arrow_rounded,
+                          size: 18.r,
+                        ),
+                        label: TextApp(
+                          text: controller.autoRotate.value
+                              ? 'إيقاف المحاكاة'
+                              : 'بدء المحاكاة',
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      icon: Icon(
-                        controller.autoRotate.value
-                            ? Icons.stop_rounded
-                            : Icons.play_arrow_rounded,
-                        size: 18.r,
-                      ),
-                      label: TextApp(
-                        text: controller.autoRotate.value
-                            ? 'إيقاف المحاكاة'
-                            : 'بدء المحاكاة',
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
+                      SizedBox(height: 16.h),
+                    ],
                   ],
                 ),
               ),
@@ -252,7 +258,8 @@ class QiblaView extends GetView<QiblaController> {
                       ),
                       if (coords.isNotEmpty) ...[
                         SizedBox(height: 2.h),
-                        Text(coords,
+                        Text(
+                          coords,
                           style: GoogleFonts.getFont(
                             'Outfit',
                             textStyle: TextStyle(
@@ -310,17 +317,26 @@ class QiblaView extends GetView<QiblaController> {
   Widget _buildStatusBanner(
     Color primaryColor,
     Color goldColor,
+    Color warningColor,
     Color textColor,
     bool isDark,
   ) {
+    final bool unavailable = controller.compassUnavailable.value;
     final bool aligned = controller.isAligned.value;
-    final Color bannerColor = aligned
+
+    final Color bannerColor = unavailable
+        ? warningColor.withValues(alpha: isDark ? 0.25 : 0.1)
+        : aligned
         ? const Color(0xFF064E3B).withValues(alpha: isDark ? 0.4 : 0.08)
         : goldColor.withValues(alpha: isDark ? 0.3 : 0.08);
-    final Color borderCol = aligned
+    final Color borderCol = unavailable
+        ? warningColor.withValues(alpha: 0.5)
+        : aligned
         ? const Color(0xFF10B981).withValues(alpha: 0.4)
         : goldColor.withValues(alpha: 0.4);
-    final Color textCol = aligned
+    final Color textCol = unavailable
+        ? warningColor
+        : aligned
         ? (isDark ? const Color(0xFF34D399) : const Color(0xFF065F46))
         : goldColor;
 
@@ -337,16 +353,25 @@ class QiblaView extends GetView<QiblaController> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            aligned ? Icons.check_circle_rounded : Icons.explore_rounded,
+            unavailable
+                ? Icons.warning_amber_rounded
+                : aligned
+                ? Icons.check_circle_rounded
+                : Icons.explore_rounded,
             color: textCol,
             size: 20.r,
           ),
           SizedBox(width: 8.w),
-          TextApp(
-            text: controller.getTurnInstruction(),
-            color: textCol,
-            fontSize: 13.sp,
-            fontWeight: FontWeight.bold,
+          Expanded(
+            child: TextApp(
+              text: unavailable
+                  ? 'بوصلة الجهاز غير متوفرة — استخدم السحب اليدوي على القرص لتحديد اتجاهك'
+                  : controller.getTurnInstruction(),
+              color: textCol,
+              fontSize: 13.sp,
+              fontWeight: FontWeight.bold,
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),
@@ -369,6 +394,9 @@ class QiblaView extends GetView<QiblaController> {
 
       return GestureDetector(
         onPanUpdate: (details) {
+          // البوصلة الحقيقية هي مصدر الحقيقة أثناء عملها — نتجاهل السحب
+          // اليدوي وقتها لأنه هيتبلع فوراً بأول قراءة حقيقية جاية.
+          if (controller.hasRealCompassSensor.value) return;
           final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
           if (renderBox != null) {
             final Offset localPos = renderBox.globalToLocal(
@@ -422,11 +450,17 @@ class QiblaView extends GetView<QiblaController> {
                           alignment: Alignment.topCenter,
                           child: Container(
                             margin: EdgeInsets.only(top: 10.h),
-                            width: isCardinal ? 3.w : (isSubCardinal ? 2.w : 1.w),
-                            height: isCardinal ? 14.h : (isSubCardinal ? 10.h : 6.h),
+                            width: isCardinal
+                                ? 3.w
+                                : (isSubCardinal ? 2.w : 1.w),
+                            height: isCardinal
+                                ? 14.h
+                                : (isSubCardinal ? 10.h : 6.h),
                             color: isCardinal
                                 ? goldColor
-                                : (isSubCardinal ? textColor.withValues(alpha: 0.5) : textColor.withValues(alpha: 0.25)),
+                                : (isSubCardinal
+                                      ? textColor.withValues(alpha: 0.5)
+                                      : textColor.withValues(alpha: 0.25)),
                           ),
                         ),
                       );
@@ -487,7 +521,9 @@ class QiblaView extends GetView<QiblaController> {
                             borderRadius: BorderRadius.circular(2.r),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFC5A059).withValues(alpha: 0.4),
+                                color: const Color(
+                                  0xFFC5A059,
+                                ).withValues(alpha: 0.4),
                                 blurRadius: 4.r,
                               ),
                             ],
@@ -576,9 +612,7 @@ class QiblaView extends GetView<QiblaController> {
           padding: EdgeInsets.only(top: 26.h),
           child: TextApp(
             text: text,
-            color: angle == 0
-                ? goldColor
-                : textColor.withValues(alpha: 0.6),
+            color: angle == 0 ? goldColor : textColor.withValues(alpha: 0.6),
             fontSize: 11.sp,
             fontWeight: FontWeight.bold,
           ),
@@ -593,6 +627,7 @@ class QiblaView extends GetView<QiblaController> {
     Color textColor,
     Color primaryColor,
     Color goldColor,
+    Color warningColor,
     bool isDark,
   ) {
     return Container(
@@ -609,6 +644,12 @@ class QiblaView extends GetView<QiblaController> {
         final String directionName = controller.getCardinalDirectionName(qibla);
         final String angleStr =
             '${controller.toArabicNumbers(qibla.toStringAsFixed(0))}° $directionName';
+
+        final bool unavailable = controller.compassUnavailable.value;
+        final bool sensorReady = controller.hasRealCompassSensor.value;
+        final String compassStatusText = unavailable
+            ? 'غير متوفرة'
+            : (sensorReady ? 'جاهزة' : 'جارٍ الكشف...');
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -632,10 +673,16 @@ class QiblaView extends GetView<QiblaController> {
               controller.distanceToKaaba.value,
               textColor,
             ),
-            _buildInfoRow('حالة البوصلة', 'جاهزة', textColor),
+            _buildInfoRow(
+              'حالة البوصلة',
+              compassStatusText,
+              textColor,
+              valueColor: unavailable ? warningColor : null,
+            ),
             const Divider(height: 24),
             TextApp(
-              text: 'ملاحظة: للحصول على أفضل دقة، ضع الهاتف بشكل مسطح وابتعد عن الأجهزة المغناطيسية.',
+              text:
+                  'ملاحظة: للحصول على أفضل دقة، ضع الهاتف بشكل مسطح وابتعد عن الأجهزة المغناطيسية.',
               color: textColor.withValues(alpha: 0.5),
               fontSize: 11.sp,
               height: 1.5,
@@ -683,7 +730,8 @@ class QiblaView extends GetView<QiblaController> {
             children: [
               Expanded(
                 child: TextApp(
-                  text: 'للحصول على أفضل دقة وتجنب التداخل المغناطيسي، يرجى تدوير الهاتف في الهواء على شكل الرقم 8 (♾️) مرتين أو ثلاث مرات، مع إبقائه في وضع أفقي مسطح.',
+                  text:
+                      'للحصول على أفضل دقة وتجنب التداخل المغناطيسي، يرجى تدوير الهاتف في الهواء على شكل الرقم 8 (♾️) مرتين أو ثلاث مرات، مع إبقائه في وضع أفقي مسطح.',
                   color: textColor.withValues(alpha: 0.7),
                   fontSize: 11.sp,
                   height: 1.6,
@@ -712,7 +760,12 @@ class QiblaView extends GetView<QiblaController> {
     );
   }
 
-  Widget _buildInfoRow(String title, String val, Color textColor) {
+  Widget _buildInfoRow(
+    String title,
+    String val,
+    Color textColor, {
+    Color? valueColor,
+  }) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 6.h),
       child: Row(
@@ -728,7 +781,7 @@ class QiblaView extends GetView<QiblaController> {
             style: GoogleFonts.getFont(
               'Outfit',
               textStyle: TextStyle(
-                color: textColor,
+                color: valueColor ?? textColor,
                 fontSize: 13.sp,
                 fontWeight: FontWeight.bold,
               ),
@@ -790,7 +843,8 @@ class QiblaView extends GetView<QiblaController> {
                   fontSize: 14.sp,
                 ),
                 subtitle: TextApp(
-                  text: key == 'gpsCurrentLocation' &&
+                  text:
+                      key == 'gpsCurrentLocation' &&
                           controller.selectedCity.value != 'gpsCurrentLocation'
                       ? 'استخدام موقعك الحالي عبر GPS لمزيد من الدقة'
                       : 'الزاوية: ${controller.toArabicNumbers(angle.toStringAsFixed(0))}° - المسافة: $distance',

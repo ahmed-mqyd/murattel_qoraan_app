@@ -12,101 +12,154 @@ class MainView extends GetView<MainController> {
   Widget build(BuildContext context) {
     final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-    return Scaffold(
-      key: scaffoldKey,
-      drawer: const Drawer(), // Side menu left empty/default for now
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Active Tab Content
-            Positioned.fill(
-              child: Obx(() => controller.pages[controller.currentIndex.value]),
-            ),
+    return PopScope(
+      // نمنع الخروج التلقائي ونتحكم نحن فيه
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final now = DateTime.now();
+        final lastPress = controller.lastBackPressTime;
+        final bool isSecondPress =
+            lastPress != null &&
+            now.difference(lastPress) < const Duration(seconds: 2);
 
-            // Drawer Trigger Icon (Top right of the screen for RTL)
-            Positioned(
-              top: 16.h,
-              right: 16.w,
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF003527).withValues(alpha: 0.4),
-                  border: Border.all(
-                    color: const Color(0xFFC5A059).withValues(alpha: 0.3),
-                    width: 1.w,
+        if (isSecondPress) {
+          // ضغطتين خلال ثانيتين → اخرج من التطبيق
+          SystemNavigator.pop();
+        } else {
+          // ضغطة أولى → أظهر رسالة
+          controller.lastBackPressTime = now;
+          Get.snackbar(
+            '',
+            '',
+            titleText: const SizedBox.shrink(),
+            messageText: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.exit_to_app_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'اضغط مرة أخرى للخروج من التطبيق',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                child: IconButton(
-                  icon: Icon(
-                    Icons.menu_rounded,
-                    color: const Color(0xFFC5A059),
-                    size: 24.r,
-                  ),
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    scaffoldKey.currentState?.openDrawer();
-                  },
+              ],
+            ),
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: const Color(0xFF003527).withValues(alpha: 0.95),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            borderRadius: 16,
+            duration: const Duration(seconds: 2),
+            isDismissible: false,
+            forwardAnimationCurve: Curves.easeOutBack,
+          );
+        }
+      },
+      child: Scaffold(
+        key: scaffoldKey,
+        drawer: const Drawer(), // Side menu left empty/default for now
+        body: SafeArea(
+          child: Stack(
+            children: [
+              // Active Tab Content
+              Positioned.fill(
+                child: Obx(
+                  () => controller.pages[controller.currentIndex.value],
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Obx(() {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        final Color navBgColor = isDark
-            ? const Color(0xFF052219)
-            : const Color(0xFFF9F9FC);
-        final Color navBorderColor = isDark
-            ? const Color(0xFF204F3F).withValues(alpha: 0.3)
-            : const Color(0xFFBFC9C3).withValues(alpha: 0.3);
 
-        return SizedBox(
-          height: 85.h,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Bottom background navigation bar
+              // Drawer Trigger Icon (Top right of the screen for RTL)
               Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: 62.h,
+                top: 16.h,
+                right: 16.w,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: navBgColor,
-                    border: Border(
-                      top: BorderSide(color: navBorderColor, width: 1.w),
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF003527).withValues(alpha: 0.4),
+                    border: Border.all(
+                      color: const Color(0xFFC5A059).withValues(alpha: 0.3),
+                      width: 1.w,
                     ),
                   ),
-                ),
-              ),
-              // Navigation Items
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                top: 0,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: List.generate(controller.pages.length, (index) {
-                      return _buildNavItem(
-                        context,
-                        index,
-                        controller.pageIcons[index],
-                        controller.pageNames[index],
-                      );
-                    }),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.menu_rounded,
+                      color: const Color(0xFFC5A059),
+                      size: 24.r,
+                    ),
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      scaffoldKey.currentState?.openDrawer();
+                    },
                   ),
                 ),
               ),
             ],
           ),
-        );
-      }),
+        ),
+        bottomNavigationBar: Obx(() {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final Color navBgColor = isDark
+              ? const Color(0xFF052219)
+              : const Color(0xFFF9F9FC);
+          final Color navBorderColor = isDark
+              ? const Color(0xFF204F3F).withValues(alpha: 0.3)
+              : const Color(0xFFBFC9C3).withValues(alpha: 0.3);
+
+          return SizedBox(
+            height: 85.h,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Bottom background navigation bar
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 62.h,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: navBgColor,
+                      border: Border(
+                        top: BorderSide(color: navBorderColor, width: 1.w),
+                      ),
+                    ),
+                  ),
+                ),
+                // Navigation Items
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  top: 0,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: List.generate(controller.pages.length, (index) {
+                        return _buildNavItem(
+                          context,
+                          index,
+                          controller.pageIcons[index],
+                          controller.pageNames[index],
+                        );
+                      }),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 
@@ -228,11 +281,10 @@ class MainView extends GetView<MainController> {
               SizedBox(height: 4.h),
               TextApp(
                 text: label,
-        
-                  color: isActive ? activeColor : inactiveColor,
-                  fontSize: 10.sp,
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-               
+
+                color: isActive ? activeColor : inactiveColor,
+                fontSize: 10.sp,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               ),
             ],
           ),

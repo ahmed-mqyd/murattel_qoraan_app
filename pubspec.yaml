@@ -48,7 +48,6 @@ dependencies:
   audio_session: ^0.1.25
   path_provider: ^2.1.5
   intl: ^0.20.2
-  record: ^5.2.1
   url_launcher: ^6.3.2
   geolocator: ^14.0.2
   flutter_compass: ^0.8.1
@@ -58,6 +57,8 @@ dependencies:
   speech_to_text: ^7.4.0
   confetti: ^0.8.0
   share_plus: ^10.0.0
+  shimmer: ^3.0.0
+  flutter_animate: ^4.5.2
 
 
 dev_dependencies:

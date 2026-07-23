@@ -29,7 +29,7 @@ void main() {
     // Verify that our Splash screen is loaded and shows 'مرتل القرآن'
     expect(find.text('مرتل القرآن'), findsOneWidget);
 
-    // Pump the timer so the pending navigation completes before test teardown
-    await tester.pump(const Duration(seconds: 3));
+    // Pump and settle all timers and animations
+    await tester.pumpAndSettle();
   });
 }

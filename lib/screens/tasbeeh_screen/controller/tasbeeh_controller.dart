@@ -42,7 +42,7 @@ class TasbeehController extends GetxController {
     dailyTotalCount.value = _prefs.getInt('daily_tasbeeh_count_$todayStr') ?? 0;
   }
 
-  void increment() async {
+  Future<void> increment() async {
     currentCount.value++;
     
     // Save to daily total
@@ -66,7 +66,7 @@ class TasbeehController extends GetxController {
     currentCount.value = 0;
   }
 
-  void resetAll() async {
+  Future<void> resetAll() async {
     currentCount.value = 0;
     cycleCount.value = 0;
   }

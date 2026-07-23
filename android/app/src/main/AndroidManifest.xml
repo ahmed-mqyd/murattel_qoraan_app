@@ -8,8 +8,11 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- مطلوبة لإشعارات الأذان الدقيقة على Android 12+ -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <application
-        android:label="مرتل القرأن "
+        android:label="مرتل القرآن"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -75,6 +78,10 @@
         </intent>
         <intent>
             <action android:name="android.intent.action.RECOGNIZE_SPEECH" />
+        </intent>
+        <!-- مطلوبة على Android 11+ حتى يرى التطبيق خدمة التعرف على الكلام -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
         </intent>
     </queries>
 </manifest>

@@ -15,6 +15,9 @@ class QiblaController extends GetxController {
   final isLoadingLocation = false.obs;
   final gpsCoords = ''.obs;
   final hasRealCompassSensor = false.obs;
+  // تتأكد أن الجهاز لا يملك بوصلة فعلية (لا event ولا حتى Stream)، بعد مهلة
+  // انتظار قصيرة — تُستخدم لعرض تحذير للمستخدم ولمنع الاعتماد على بيانات وهمية.
+  final compassUnavailable = false.obs;
   final sensorAccuracy = 0.0.obs;
 
   // Coordinates of Kaaba
@@ -33,6 +36,7 @@ class QiblaController extends GetxController {
 
   Timer? _fluctuationTimer;
   Timer? _autoRotateTimer;
+  Timer? _compassAvailabilityCheckTimer;
   StreamSubscription<CompassEvent>? _compassSubscription;
   final autoRotate = false.obs;
 
@@ -49,21 +53,47 @@ class QiblaController extends GetxController {
   void onClose() {
     _fluctuationTimer?.cancel();
     _autoRotateTimer?.cancel();
+    _compassAvailabilityCheckTimer?.cancel();
     _compassSubscription?.cancel();
     super.onClose();
   }
 
   void _initCompassStream() {
-    _compassSubscription = FlutterCompass.events?.listen((CompassEvent event) {
+    final compassEvents = FlutterCompass.events;
+    if (compassEvents == null) {
+      // الجهاز لا يملك حساس بوصلة إطلاقاً (Stream نفسه null)
+      _markCompassUnavailable();
+      return;
+    }
+
+    _compassSubscription = compassEvents.listen((CompassEvent event) {
       if (event.heading != null) {
         hasRealCompassSensor.value = true;
+        compassUnavailable.value = false;
         _fluctuationTimer?.cancel();
+        _compassAvailabilityCheckTimer?.cancel();
         updateHeading(event.heading!);
         if (event.accuracy != null) {
           sensorAccuracy.value = event.accuracy!;
         }
       }
+    }, onError: (_) => _markCompassUnavailable());
+
+    // بعض الأجهزة تُرجع Stream غير null لكنها لا تصدر أي قراءة أبداً
+    // (حساس معطوب أو محظور) — نعتبرها غير متاحة بعد مهلة انتظار قصيرة.
+    _compassAvailabilityCheckTimer = Timer(const Duration(seconds: 3), () {
+      if (!hasRealCompassSensor.value) {
+        _markCompassUnavailable();
+      }
     });
+  }
+
+  void _markCompassUnavailable() {
+    compassUnavailable.value = true;
+    _fluctuationTimer?.cancel();
+    // نعيد المؤشر لنقطة بداية واضحة (الشمال) بدل تجميده على قيمة عشوائية
+    currentHeading.value = 0.0;
+    checkAlignment();
   }
 
   void _startFluctuation() {
@@ -277,7 +307,7 @@ class QiblaController extends GetxController {
     }
     double diff = qiblaAngle.value - currentHeading.value;
     diff = (diff + 180) % 360 - 180;
-    
+
     final int degrees = diff.abs().round();
     if (diff > 0) {
       return 'أدر الهاتف ${toArabicNumbers(degrees.toString())}° يميناً';

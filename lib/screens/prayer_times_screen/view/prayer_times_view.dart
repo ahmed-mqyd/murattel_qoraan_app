@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:murattel_qoraan_app/core/widgets/shimmer_loading_widget.dart';
 import 'package:murattel_qoraan_app/core/text_app/text_app.dart';
 import 'package:murattel_qoraan_app/core/theme/app_theme.dart';
 import '../controller/prayer_times_controller.dart';
@@ -58,14 +60,14 @@ class PrayerTimesView extends GetView<PrayerTimesController> {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return Center(child: CircularProgressIndicator(color: goldColor));
+          return const PrayerTimesShimmerLoading();
         }
 
         return SingleChildScrollView(
           padding: EdgeInsets.all(20.w),
           child: Column(
             children: [
-              // Next Prayer Card
+              // Next Prayer Card with entrance animation
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(24.w),
@@ -112,7 +114,7 @@ class PrayerTimesView extends GetView<PrayerTimesController> {
                     ),
                   ],
                 ),
-              ),
+              ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
               SizedBox(height: 32.h),
 
               // Prayer Times List

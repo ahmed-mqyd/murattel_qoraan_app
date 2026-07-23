@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:murattel_qoraan_app/core/location_services/location_services.dart';
 import 'package:murattel_qoraan_app/core/notification_services/notification_services.dart';
+import 'package:murattel_qoraan_app/core/utils/prayer_time_utils.dart';
 
 class PrayerTimesController extends GetxController {
   final isLoading = true.obs;
@@ -165,10 +166,9 @@ class PrayerTimesController extends GetxController {
   }
 
   String _formatTime(String time) {
-    time;
     const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
     const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    var temp = time;
+    var temp = cleanPrayerTimeString(time);
     for (var i = 0; i < english.length; i++) {
       temp = temp.replaceAll(english[i], arabic[i]);
     }
@@ -188,7 +188,17 @@ class PrayerTimesController extends GetxController {
     ];
 
     for (var prayer in prayers) {
-      final prayerTime = format.parse(prayer['time']!);
+      final rawTime = prayer['time'] as String? ?? '';
+      final cleanTime = cleanPrayerTimeString(rawTime);
+      if (cleanTime.isEmpty) continue;
+
+      DateTime prayerTime;
+      try {
+        prayerTime = format.parse(cleanTime);
+      } catch (_) {
+        continue;
+      }
+
       final prayerDateTime = DateTime(
         now.year,
         now.month,
@@ -199,13 +209,13 @@ class PrayerTimesController extends GetxController {
 
       if (prayerDateTime.isAfter(now)) {
         nextPrayerName.value = prayer['name']!;
-        nextPrayerTime.value = _formatTime(prayer['time']!);
+        nextPrayerTime.value = _formatTime(rawTime);
         return;
       }
     }
 
-    // If all prayers passed, next is tomorrow's Fajr
+    // إذا مضت كل الصلوات، التالي هو فجر الغد
     nextPrayerName.value = 'الفجر';
-    nextPrayerTime.value = _formatTime(timings['Fajr']);
+    nextPrayerTime.value = _formatTime(timings['Fajr'] ?? '');
   }
 }

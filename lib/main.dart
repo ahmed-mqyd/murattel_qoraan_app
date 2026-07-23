@@ -9,25 +9,30 @@ import 'package:murattel_qoraan_app/core/bindings/initial_binding.dart';
 import 'package:murattel_qoraan_app/core/notification_services/notification_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio_background/just_audio_background.dart';
-  
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize background audio playback service
-  await JustAudioBackground.init(
-    androidNotificationChannelId: 'com.ahmdmqyd.murattelqoraan.channel.audio',
-    androidNotificationChannelName: 'تلاوة القرآن الكريم',
-    androidNotificationOngoing: true,
-  );
-  
+  try {
+    await JustAudioBackground.init(
+      androidNotificationChannelId: 'com.ahmdmqyd.murattelqoraan.channel.audio',
+      androidNotificationChannelName: 'تلاوة القرآن الكريم',
+      androidNotificationOngoing: true,
+    );
+  } catch (e) {
+    // التطبيق يعمل بدون تشغيل في الخلفية إذا فشلت التهيئة
+    Get.log('فشل تهيئة خدمة الصوت الخلفي: $e');
+  }
+
   // Initialize SharedPreferences and register it for DI
   final prefs = await SharedPreferences.getInstance();
   Get.put<SharedPreferences>(prefs, permanent: true);
-  
+
   // Initialize and schedule daily notifications
   await NotificationServices.initialize();
   await NotificationServices.scheduleDailySpiritualGoals();
-  
+
   Get.put(ThemeController());
   runApp(const MyApp());
 
@@ -49,7 +54,7 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return Obx(() {
           return GetMaterialApp(
-            title: 'Murattel Quraan',
+            title: 'مرتل القرآن',
             debugShowCheckedModeBanner: false,
             theme: themeController.themeModeString == 'sepia'
                 ? AppTheme.sepiaTheme

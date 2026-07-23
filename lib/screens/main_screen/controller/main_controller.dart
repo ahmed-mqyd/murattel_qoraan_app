@@ -9,6 +9,9 @@ import 'package:murattel_qoraan_app/screens/settings_screen/view/settings_view.d
 class MainController extends GetxController {
   final currentIndex = 2.obs;
 
+  /// آخر وقت ضغط زر الرجوع — لتتبع الضغطة المزدوجة للخروج من التطبيق
+  DateTime? lastBackPressTime;
+
   final List<Widget> pages = [
     const HifzView(),
     const MushafView(),
