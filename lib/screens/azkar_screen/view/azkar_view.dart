@@ -38,17 +38,25 @@ class AzkarView extends GetView<AzkarController> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: TextApp(
-          text: "أذكار المسلم",
-          color: primaryColor,
-          fontSize: 18.sp,
-          fontWeight: FontWeight.bold,
+        title: Obx(
+          () => TextApp(
+            text: controller.currentCategoryData?.title ?? 'أذكار المسلم',
+            color: primaryColor,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, color: primaryColor),
           onPressed: () => Get.back(),
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.format_size, color: primaryColor),
+            tooltip: 'تغيير حجم الخط',
+            onPressed: () =>
+                _showFontSizeBottomSheet(context, primaryColor, goldColor),
+          ),
           IconButton(
             icon: Icon(Icons.refresh, color: primaryColor),
             onPressed: () => _showResetConfirmDialog(context),
@@ -66,8 +74,25 @@ class AzkarView extends GetView<AzkarController> {
               Column(
                 children: [
                   // 1. Category selector
-                  _buildCategorySelector(primaryColor, goldColor, textColor, isDark),
+                  _buildCategorySelector(
+                    primaryColor,
+                    goldColor,
+                    textColor,
+                    isDark,
+                  ),
                   SizedBox(height: 10.h),
+
+                  // 1.5 شريط تلاوة الرقية الشرعية (يظهر في قسم الرقية فقط)
+                  if (controller.isRuqyahCategory) ...[
+                    _buildRuqyahAudioBar(
+                      primaryColor,
+                      goldColor,
+                      cardBackgroundColor,
+                      outlineColor,
+                      textColor,
+                    ),
+                    SizedBox(height: 10.h),
+                  ],
 
                   if (azkarList.isNotEmpty) ...[
                     // 2. Step Selector (Chips matching Wasiya screen)
@@ -136,7 +161,7 @@ class AzkarView extends GetView<AzkarController> {
                   ],
                 ],
               ),
-              
+
               // Success overlay
               if (isCategoryDone)
                 _buildSuccessBanner(backgroundColor, primaryColor, goldColor),
@@ -156,16 +181,102 @@ class AzkarView extends GetView<AzkarController> {
     return Container(
       height: 50.h,
       margin: EdgeInsets.symmetric(vertical: 4.h),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        children: [
-          _buildCategoryItem('morning', 'أذكار الصباح', Icons.wb_sunny_outlined, primary, gold, text),
-          _buildCategoryItem('evening', 'أذكار المساء', Icons.nightlight_round_outlined, primary, gold, text),
-          _buildCategoryItem('after_prayer', 'بعد الصلاة', Icons.mosque_outlined, primary, gold, text),
-          _buildCategoryItem('sleep', 'أذكار النوم', Icons.bedtime_outlined, primary, gold, text),
-        ],
+      // الأقسام المعروضة = أقسام نفس المجموعة (اليومية / المكتبة / حصن المسلم)
+      child: Obx(() {
+        final groupCategories = controller.sameGroupCategories;
+        return ListView(
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          children: groupCategories
+              .map(
+                (category) => _buildCategoryItem(
+                  category.key,
+                  category.title,
+                  category.icon,
+                  primary,
+                  gold,
+                  text,
+                ),
+              )
+              .toList(),
+        );
+      }),
+    );
+  }
+
+  Widget _buildRuqyahAudioBar(
+    Color primary,
+    Color gold,
+    Color cardBg,
+    Color outline,
+    Color text,
+  ) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: gold.withValues(alpha: 0.4), width: 1.w),
+        boxShadow: AppTheme.shadowSm,
       ),
+      child: Obx(() {
+        final bool playing = controller.isRuqyahPlaying;
+        return Row(
+          children: [
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                controller.toggleRuqyahAudio();
+              },
+              child: Container(
+                width: 42.w,
+                height: 42.w,
+                decoration: BoxDecoration(
+                  color: primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: gold, width: 1.5.w),
+                ),
+                child: Icon(
+                  playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 24.r,
+                ),
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextApp(
+                    text: playing
+                        ? 'جارٍ تلاوة آيات الرقية...'
+                        : 'استمع لآيات الرقية الشرعية',
+                    color: text,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  SizedBox(height: 2.h),
+                  TextApp(
+                    text: 'بصوت قارئك المختار — تعمل في الخلفية',
+                    color: text.withValues(alpha: 0.5),
+                    fontSize: 10.5.sp,
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.stop_rounded, color: gold, size: 22.r),
+              tooltip: 'إيقاف التلاوة',
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                controller.stopRuqyahAudio();
+              },
+            ),
+          ],
+        );
+      }),
     );
   }
 
@@ -268,7 +379,9 @@ class AzkarView extends GetView<AzkarController> {
                     text: 'الذكر ${_toArabicNumbers((index + 1).toString())}',
                     color: isSelected ? Colors.white : text,
                     fontSize: 12.sp,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ],
               ),
@@ -302,22 +415,51 @@ class AzkarView extends GetView<AzkarController> {
           Positioned.fill(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              child: Text(
-                dhikr.text,
-                textAlign: TextAlign.center,
-                textDirection: TextDirection.rtl,
-                style: GoogleFonts.amiri(
-                  textStyle: TextStyle(
-                    color: text,
-                    fontSize: 20.sp,
-                    height: 1.8,
-                    fontWeight: FontWeight.w500,
+              child: Column(
+                children: [
+                  Obx(
+                    () => Text(
+                      dhikr.text,
+                      textAlign: TextAlign.center,
+                      textDirection: TextDirection.rtl,
+                      style: GoogleFonts.amiri(
+                        textStyle: TextStyle(
+                          color: text,
+                          fontSize: controller.fontSize.value.sp,
+                          height: 1.8,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  if (dhikr.source != null) ...[
+                    SizedBox(height: 10.h),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 4.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: gold.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: gold.withValues(alpha: 0.25),
+                          width: 1.w,
+                        ),
+                      ),
+                      child: TextApp(
+                        text: dhikr.source!,
+                        color: gold,
+                        fontSize: 10.5.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
-          
+
           // Favorite Star Button in top-right corner
           Positioned(
             left: 0,
@@ -462,8 +604,13 @@ class AzkarView extends GetView<AzkarController> {
     Color text,
     bool isDark,
   ) {
-    final int completedSteps = azkarList.where((d) => d.isFinished.value).length;
-    final progress = (completedSteps / azkarList.length.toDouble()).clamp(0.0, 1.0);
+    final int completedSteps = azkarList
+        .where((d) => d.isFinished.value)
+        .length;
+    final progress = (completedSteps / azkarList.length.toDouble()).clamp(
+      0.0,
+      1.0,
+    );
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
@@ -504,7 +651,7 @@ class AzkarView extends GetView<AzkarController> {
             ],
           ),
           SizedBox(height: 8.h),
-          
+
           ClipRRect(
             borderRadius: BorderRadius.circular(4.r),
             child: LinearProgressIndicator(
@@ -516,15 +663,19 @@ class AzkarView extends GetView<AzkarController> {
               valueColor: AlwaysStoppedAnimation<Color>(gold),
             ),
           ),
-          
+
           SizedBox(height: 12.h),
-          
+
           // Navigation controls
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: Icon(Icons.arrow_back_ios_rounded, color: primary, size: 20.r),
+                icon: Icon(
+                  Icons.arrow_back_ios_rounded,
+                  color: primary,
+                  size: 20.r,
+                ),
                 onPressed: currentIndex > 0
                     ? () {
                         HapticFeedback.selectionClick();
@@ -533,12 +684,17 @@ class AzkarView extends GetView<AzkarController> {
                     : null,
               ),
               TextApp(
-                text: 'الخطوة ${_toArabicNumbers((currentIndex + 1).toString())}',
+                text:
+                    'الخطوة ${_toArabicNumbers((currentIndex + 1).toString())}',
                 color: text.withValues(alpha: 0.6),
                 fontSize: 12.sp,
               ),
               IconButton(
-                icon: Icon(Icons.arrow_forward_ios_rounded, color: primary, size: 20.r),
+                icon: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: primary,
+                  size: 20.r,
+                ),
                 onPressed: currentIndex < azkarList.length - 1
                     ? () {
                         HapticFeedback.selectionClick();
@@ -617,10 +773,9 @@ class AzkarView extends GetView<AzkarController> {
   void _showResetConfirmDialog(BuildContext context) {
     Get.defaultDialog(
       title: 'إعادة ضبط الأذكار',
-      titleStyle: TextApp.style(
-        fontWeight: FontWeight.bold,
-      ),
-      middleText: 'هل تريد إعادة تصفير عدادات الأذكار للقسم الحالي للبدء من جديد؟',
+      titleStyle: TextApp.style(fontWeight: FontWeight.bold),
+      middleText:
+          'هل تريد إعادة تصفير عدادات الأذكار للقسم الحالي للبدء من جديد؟',
       middleTextStyle: TextApp.style(),
       backgroundColor: Colors.white,
       radius: 16.r,
@@ -644,5 +799,66 @@ class AzkarView extends GetView<AzkarController> {
       result = result.replaceAll(english[i], arabic[i]);
     }
     return result;
+  }
+
+  void _showFontSizeBottomSheet(
+    BuildContext context,
+    Color primary,
+    Color gold,
+  ) {
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(24.w),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextApp(
+              text: 'حجم خط الأذكار',
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+              color: primary,
+            ),
+            SizedBox(height: 16.h),
+            Obx(
+              () => Row(
+                children: [
+                  Icon(Icons.text_fields, size: 18.r, color: primary),
+                  Expanded(
+                    child: Slider(
+                      value: controller.fontSize.value,
+                      min: 16.0,
+                      max: 36.0,
+                      divisions: 20,
+                      activeColor: gold,
+                      inactiveColor: primary.withValues(alpha: 0.2),
+                      label: '${controller.fontSize.value.round()}',
+                      onChanged: (val) => controller.updateFontSize(val),
+                    ),
+                  ),
+                  Icon(Icons.text_fields, size: 28.r, color: primary),
+                ],
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Obx(
+              () => Text(
+                'أَسْتَغْفِرُ اللَّهَ العَظِيمَ',
+                style: GoogleFonts.amiri(
+                  textStyle: TextStyle(
+                    fontSize: controller.fontSize.value.sp,
+                    color: primary,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+          ],
+        ),
+      ),
+    );
   }
 }

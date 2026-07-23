@@ -1,8 +1,8 @@
 import 'package:get/get.dart';
 import 'package:murattel_qoraan_app/core/routes/app_routes.dart';
-import 'package:murattel_qoraan_app/screens/main_screen/view/main_view.dart'; 
+import 'package:murattel_qoraan_app/screens/main_screen/view/main_view.dart';
 import 'package:murattel_qoraan_app/screens/main_screen/controller/main_controller.dart';
-import 'package:murattel_qoraan_app/screens/splash_screen/view/splash_view.dart'; 
+import 'package:murattel_qoraan_app/screens/splash_screen/view/splash_view.dart';
 import 'package:murattel_qoraan_app/screens/splash_screen/controller/splash_controller.dart';
 import 'package:murattel_qoraan_app/screens/home_screen/controller/home_controller.dart';
 import 'package:murattel_qoraan_app/screens/mushaf_screen/controller/mushaf_controller.dart';
@@ -22,6 +22,9 @@ import 'package:murattel_qoraan_app/screens/tasbeeh_screen/controller/tasbeeh_co
 import 'package:murattel_qoraan_app/screens/wasiya_screen/view/wasiya_view.dart';
 import 'package:murattel_qoraan_app/screens/wasiya_screen/controller/wasiya_controller.dart';
 import 'package:murattel_qoraan_app/screens/suluk_screen/controller/khatmah_controller.dart';
+import 'package:murattel_qoraan_app/screens/downloads_screen/view/downloads_view.dart';
+import 'package:murattel_qoraan_app/screens/downloads_screen/controller/downloads_controller.dart';
+import 'package:murattel_qoraan_app/screens/azkar_library_screen/view/azkar_library_view.dart';
 
 abstract class AppPages {
   static const initial = Routes.splash;
@@ -95,6 +98,19 @@ abstract class AppPages {
       binding: BindingsBuilder(() {
         Get.put(WasiyaController());
       }),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.downloads,
+      page: () => const DownloadsView(),
+      binding: BindingsBuilder(() {
+        Get.put(DownloadsController());
+      }),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.azkarLibrary,
+      page: () => const AzkarLibraryView(),
       transition: Transition.rightToLeft,
     ),
   ];

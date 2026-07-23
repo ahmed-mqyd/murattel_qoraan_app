@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:murattel_qoraan_app/core/text_app/text_app.dart';
 import 'package:murattel_qoraan_app/core/theme/app_theme.dart';
 import 'package:murattel_qoraan_app/core/images/images_const.dart';
@@ -70,7 +71,7 @@ class HomeScreen extends GetView<HomeController> {
                 goldColor,
                 textColor,
                 isDark,
-              ),
+              ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.05, end: 0),
               SizedBox(height: 20.h),
 
               // 3. Bento Grid: Daily Goal & Continue Reading
@@ -82,7 +83,7 @@ class HomeScreen extends GetView<HomeController> {
                 primaryColor,
                 goldColor,
                 textColor,
-              ),
+              ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideY(begin: 0.05, end: 0),
               SizedBox(height: 24.h),
 
               // 4. Quick Actions
@@ -94,7 +95,7 @@ class HomeScreen extends GetView<HomeController> {
                 primaryColor,
                 goldColor,
                 textColor,
-              ),
+              ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(begin: 0.05, end: 0),
               SizedBox(height: 24.h),
 
               // 4.5. Favorites Section
@@ -116,7 +117,7 @@ class HomeScreen extends GetView<HomeController> {
                 primaryColor,
                 goldColor,
                 textColor,
-              ),
+              ).animate().fadeIn(duration: 500.ms, delay: 300.ms).slideY(begin: 0.05, end: 0),
               SizedBox(height: 32.h),
             ],
           ),
@@ -1120,7 +1121,7 @@ class HomeScreen extends GetView<HomeController> {
               } else if (title == 'مواقيت الصلاة') {
                 Get.toNamed(Routes.prayerTimes);
               } else if (title == "حصن المسلم") {
-                Get.toNamed(Routes.azkar);
+                Get.toNamed(Routes.azkarLibrary);
               } else {
                 Get.snackbar(
                   action['title'] as String,
