@@ -166,7 +166,8 @@ class AzkarLibraryView extends StatelessWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 10.h,
         crossAxisSpacing: 10.w,
-        childAspectRatio: 1.9,
+        // هامش ارتفاع إضافي للعناوين الطويلة التي تلتف لسطرين (مثل عناوين حصن المسلم)
+        childAspectRatio: 1.75,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {

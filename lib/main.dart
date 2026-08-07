@@ -30,8 +30,14 @@ void main() async {
   Get.put<SharedPreferences>(prefs, permanent: true);
 
   // Initialize and schedule daily notifications
-  await NotificationServices.initialize();
-  await NotificationServices.scheduleDailySpiritualGoals();
+  // مُغلَّفة بـ try/catch: فشل تهيئة الإشعارات (مثلاً رفض صلاحية التنبيه
+  // الدقيق على أول تشغيل) لا يجب أن يمنع فتح التطبيق إطلاقاً
+  try {
+    await NotificationServices.initialize();
+    await NotificationServices.scheduleDailySpiritualGoals();
+  } catch (e) {
+    Get.log('فشل تهيئة/جدولة الإشعارات عند الإقلاع: $e');
+  }
 
   Get.put(ThemeController());
   runApp(const MyApp());

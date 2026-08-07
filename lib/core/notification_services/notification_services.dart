@@ -22,6 +22,16 @@ class NotificationServices {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  // false افتراضيًا (أكثر أمانًا): على أندرويد 12+ التنبيه الدقيق يحتاج صلاحية
+  // يمنحها المستخدم يدويًا من الإعدادات، وعلى أول تشغيل (تثبيت جديد) لا تكون
+  // ممنوحة أبداً. الجدولة الدقيقة بدون هذا التحقق كانت تُسقط استثناء غير
+  // مُعالَج عند الإقلاع وتُسبّب انهيار التطبيق قبل ظهور أي واجهة.
+  static bool _canScheduleExact = false;
+
+  static AndroidScheduleMode get _scheduleMode => _canScheduleExact
+      ? AndroidScheduleMode.exactAllowWhileIdle
+      : AndroidScheduleMode.inexactAllowWhileIdle;
+
   static Future<void> initialize() async {
     tz.initializeTimeZones();
     try {
@@ -72,6 +82,14 @@ class NotificationServices {
         // تُتجاهَل إذا كانت الصلاحية غير مدعومة على هذا الإصدار
         Get.log('فشل طلب صلاحية التنبيهات الدقيقة: $e');
       }
+      try {
+        // التحقق الفعلي بعد الطلب: طلب الصلاحية لا يعني منحها.
+        // نعتمد على هذا لاختيار وضع الجدولة الآمن بدل افتراض النجاح.
+        _canScheduleExact =
+            await androidPlugin.canScheduleExactNotifications() ?? false;
+      } catch (e) {
+        _canScheduleExact = false;
+      }
     }
   }
 
@@ -91,21 +109,26 @@ class NotificationServices {
   }
 
   static Future<void> scheduleDailySpiritualGoals() async {
-    // إلغاء إشعارات الأذكار والتذكير فقط (ليس إشعارات الأذان)
-    final idsToCancel = [
-      _NotificationIds.azkarMorning,
-      _NotificationIds.azkarEvening,
-      ...List.generate(7, (i) => _NotificationIds.reminderBase + i),
-    ];
-    for (final notifId in idsToCancel) {
-      await _notificationsPlugin.cancel(id: notifId);
+    try {
+      // إلغاء إشعارات الأذكار والتذكير فقط (ليس إشعارات الأذان)
+      final idsToCancel = [
+        _NotificationIds.azkarMorning,
+        _NotificationIds.azkarEvening,
+        ...List.generate(7, (i) => _NotificationIds.reminderBase + i),
+      ];
+      for (final notifId in idsToCancel) {
+        await _notificationsPlugin.cancel(id: notifId);
+      }
+
+      // 1. إشعارات الأذكار
+      await _scheduleAzkarNotifications();
+
+      // 2. تذكيرات عشوائية
+      await _scheduleRandomReminders();
+    } catch (e) {
+      // فشل جدولة التذكيرات لا يجب أن يمنع تشغيل التطبيق
+      Get.log('فشل جدولة الأذكار والتذكيرات اليومية: $e');
     }
-
-    // 1. إشعارات الأذكار
-    await _scheduleAzkarNotifications();
-
-    // 2. تذكيرات عشوائية
-    await _scheduleRandomReminders();
   }
 
   static Future<void> _scheduleAzkarNotifications() async {
@@ -126,7 +149,7 @@ class NotificationServices {
       body: 'حان وقت أذكار الصباح ✨',
       scheduledDate: _nextInstanceOfTime(7, 0),
       notificationDetails: platformMorning,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: _scheduleMode,
       matchDateTimeComponents: DateTimeComponents.time,
       payload: 'morning',
     );
@@ -137,7 +160,7 @@ class NotificationServices {
       body: 'حان وقت أذكار المساء 🌟',
       scheduledDate: _nextInstanceOfTime(17, 0),
       notificationDetails: platformMorning,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: _scheduleMode,
       matchDateTimeComponents: DateTimeComponents.time,
       payload: 'evening',
     );
@@ -174,7 +197,7 @@ class NotificationServices {
           body: msgs[random.nextInt(3)],
           scheduledDate: tz.TZDateTime.from(scheduledDateTime, tz.local),
           notificationDetails: platformReminder,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          androidScheduleMode: _scheduleMode,
           payload: 'reminder',
         );
       }
@@ -186,36 +209,51 @@ class NotificationServices {
     int dailyPages,
     int hour,
   ) async {
-    // إلغاء الإشعار القديم أولاً
-    await _notificationsPlugin.cancel(id: _NotificationIds.khatmah);
+    try {
+      // إلغاء الإشعار القديم أولاً
+      await _notificationsPlugin.cancel(id: _NotificationIds.khatmah);
 
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-          'khatmah_channel',
-          'مخطط الختمة',
-          importance: Importance.high,
-          priority: Priority.high,
-        );
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
-    const NotificationDetails platformDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
+      const AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
+            'khatmah_channel',
+            'مخطط الختمة',
+            importance: Importance.high,
+            priority: Priority.high,
+          );
+      const DarwinNotificationDetails iosDetails =
+          DarwinNotificationDetails();
+      const NotificationDetails platformDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
 
-    await _notificationsPlugin.zonedSchedule(
-      id: _NotificationIds.khatmah,
-      title: '📖 ورد الختمة اليومي',
-      body: 'تبقى لك $dailyPages صفحة لهدف اليوم، لا تفوّت الورد!',
-      scheduledDate: _nextInstanceOfTime(hour, 0),
-      notificationDetails: platformDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time,
-      payload: 'reminder',
-    );
+      await _notificationsPlugin.zonedSchedule(
+        id: _NotificationIds.khatmah,
+        title: '📖 ورد الختمة اليومي',
+        body: 'تبقى لك $dailyPages صفحة لهدف اليوم، لا تفوّت الورد!',
+        scheduledDate: _nextInstanceOfTime(hour, 0),
+        notificationDetails: platformDetails,
+        androidScheduleMode: _scheduleMode,
+        matchDateTimeComponents: DateTimeComponents.time,
+        payload: 'reminder',
+      );
+    } catch (e) {
+      Get.log('فشل جدولة إشعار الختمة: $e');
+    }
   }
 
   /// جدولة إشعارات أوقات الصلاة — مُصلَح بـ for loop بدلاً من forEach
   static Future<void> schedulePrayerNotifications(
+    Map<String, String> timings,
+  ) async {
+    try {
+      await _schedulePrayerNotificationsUnsafe(timings);
+    } catch (e) {
+      Get.log('فشل جدولة إشعارات مواقيت الصلاة: $e');
+    }
+  }
+
+  static Future<void> _schedulePrayerNotificationsUnsafe(
     Map<String, String> timings,
   ) async {
     // إلغاء إشعارات الأذان القديمة أولاً
@@ -300,8 +338,8 @@ class NotificationServices {
         body: 'حان الآن موعد الأذان 📢',
         scheduledDate: tzScheduledDate,
         notificationDetails: platformDetails,
-        // exactAllowWhileIdle لضمان الدقة حتى في وضع التوفير
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        // دقيق إذا كانت الصلاحية ممنوحة، وإلا وضع تقريبي آمن (انظر _scheduleMode)
+        androidScheduleMode: _scheduleMode,
         // تكرار يومي بنفس الوقت
         matchDateTimeComponents: DateTimeComponents.time,
         payload: 'prayer',

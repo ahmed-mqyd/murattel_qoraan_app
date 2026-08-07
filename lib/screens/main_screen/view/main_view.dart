@@ -10,8 +10,6 @@ class MainView extends GetView<MainController> {
 
   @override
   Widget build(BuildContext context) {
-    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-
     return PopScope(
       // نمنع الخروج التلقائي ونتحكم نحن فيه
       canPop: false,
@@ -63,46 +61,8 @@ class MainView extends GetView<MainController> {
         }
       },
       child: Scaffold(
-        key: scaffoldKey,
-        drawer: const Drawer(), // Side menu left empty/default for now
         body: SafeArea(
-          child: Stack(
-            children: [
-              // Active Tab Content
-              Positioned.fill(
-                child: Obx(
-                  () => controller.pages[controller.currentIndex.value],
-                ),
-              ),
-
-              // Drawer Trigger Icon (Top right of the screen for RTL)
-              Positioned(
-                top: 16.h,
-                right: 16.w,
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFF003527).withValues(alpha: 0.4),
-                    border: Border.all(
-                      color: const Color(0xFFC5A059).withValues(alpha: 0.3),
-                      width: 1.w,
-                    ),
-                  ),
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.menu_rounded,
-                      color: const Color(0xFFC5A059),
-                      size: 24.r,
-                    ),
-                    onPressed: () {
-                      HapticFeedback.selectionClick();
-                      scaffoldKey.currentState?.openDrawer();
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
+          child: Obx(() => controller.pages[controller.currentIndex.value]),
         ),
         bottomNavigationBar: Obx(() {
           final isDark = Theme.of(context).brightness == Brightness.dark;
