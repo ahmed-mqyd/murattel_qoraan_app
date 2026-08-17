@@ -6,7 +6,6 @@ import 'package:murattel_qoraan_app/core/theme/app_theme.dart';
 import 'package:murattel_qoraan_app/core/theme/theme_service.dart';
 import 'package:murattel_qoraan_app/core/routes/app_pages.dart';
 import 'package:murattel_qoraan_app/core/bindings/initial_binding.dart';
-import 'package:murattel_qoraan_app/core/notification_services/notification_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
@@ -29,21 +28,12 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   Get.put<SharedPreferences>(prefs, permanent: true);
 
-  // Initialize and schedule daily notifications
-  // مُغلَّفة بـ try/catch: فشل تهيئة الإشعارات (مثلاً رفض صلاحية التنبيه
-  // الدقيق على أول تشغيل) لا يجب أن يمنع فتح التطبيق إطلاقاً
-  try {
-    await NotificationServices.initialize();
-    await NotificationServices.scheduleDailySpiritualGoals();
-  } catch (e) {
-    Get.log('فشل تهيئة/جدولة الإشعارات عند الإقلاع: $e');
-  }
+  // ملاحظة: تهيئة الإشعارات وطلب صلاحياتها انتقلت إلى MainController.onInit()
+  // — بعد ظهور الشاشة الرئيسية فعليًا، وليس هنا أثناء الإقلاع. راجع
+  // lib/screens/main_screen/controller/main_controller.dart
 
   Get.put(ThemeController());
   runApp(const MyApp());
-
-  // Check if app was launched via notification click
-  NotificationServices.checkAppLaunchNotification();
 }
 
 class MyApp extends StatelessWidget {
