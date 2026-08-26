@@ -1059,6 +1059,8 @@ class HomeScreen extends GetView<HomeController> {
     Color goldColor,
     Color textColor,
   ) {
+    // ملاحظة: القبلة ومواقيت الصلاة انتقلتا للقائمة الجانبية الجديدة
+    // لتخفيف ازدحام الشاشة الرئيسية — ما زالتا متاحتين من هناك بنقرة واحدة
     final actions = [
       {
         'title': 'تسميع ذكي',
@@ -1067,22 +1069,10 @@ class HomeScreen extends GetView<HomeController> {
         'color': primaryColor,
       },
       {
-        'title': 'القبلة',
-        'desc': 'تحديد اتجاه الصلاة',
-        'icon': Icons.explore_outlined,
-        'color': goldColor,
-      },
-      {
         'title': 'آية اليوم',
         'desc': 'تأملات يومية مختارة',
         'icon': Icons.today,
         'color': Colors.blueGrey,
-      },
-      {
-        'title': 'مواقيت الصلاة',
-        'desc': 'صلاة الفجر: ٠٤:٣٠ ص',
-        'icon': Icons.schedule,
-        'color': primaryColor,
       },
       {
         'title': "حصن المسلم",
@@ -1112,14 +1102,10 @@ class HomeScreen extends GetView<HomeController> {
             onTap: () {
               HapticFeedback.selectionClick();
               final String title = action['title'] as String;
-              if (title == 'القبلة') {
-                Get.toNamed(Routes.qibla);
-              } else if (title == 'تسميع ذكي') {
+              if (title == 'تسميع ذكي') {
                 Get.find<MainController>().changePage(
                   0,
                 ); // Switch to Hifz view (index 0)
-              } else if (title == 'مواقيت الصلاة') {
-                Get.toNamed(Routes.prayerTimes);
               } else if (title == "حصن المسلم") {
                 Get.toNamed(Routes.azkarLibrary);
               } else {

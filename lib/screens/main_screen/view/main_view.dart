@@ -4,6 +4,7 @@ import 'package:flutter_screenutil_plus/flutter_screenutil_plus.dart';
 import 'package:get/get.dart';
 import 'package:murattel_qoraan_app/core/text_app/text_app.dart';
 import '../controller/main_controller.dart';
+import 'widgets/app_drawer.dart';
 
 class MainView extends GetView<MainController> {
   const MainView({super.key});
@@ -61,8 +62,45 @@ class MainView extends GetView<MainController> {
         }
       },
       child: Scaffold(
+        drawer: const AppDrawer(),
         body: SafeArea(
-          child: Obx(() => controller.pages[controller.currentIndex.value]),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Obx(
+                  () => controller.pages[controller.currentIndex.value],
+                ),
+              ),
+              // زر فتح القائمة الجانبية (أعلى يمين الشاشة لدعم RTL)
+              Positioned(
+                top: 16.h,
+                right: 16.w,
+                child: Builder(
+                  builder: (context) => Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF003527).withValues(alpha: 0.4),
+                      border: Border.all(
+                        color: const Color(0xFFC5A059).withValues(alpha: 0.3),
+                        width: 1.w,
+                      ),
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.menu_rounded,
+                        color: const Color(0xFFC5A059),
+                        size: 24.r,
+                      ),
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        Scaffold.of(context).openDrawer();
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         bottomNavigationBar: Obx(() {
           final isDark = Theme.of(context).brightness == Brightness.dark;
