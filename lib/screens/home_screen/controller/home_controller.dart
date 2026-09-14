@@ -66,6 +66,12 @@ class HomeController extends GetxController {
     {'name': 'يوسف المقيد', 'image': yosefMqyd},
     {'name': 'الحاج ابراهيم المقيد ابو خضر', 'image': abuKhader},
     {'name': 'محمود المقيد', 'image': mahmoudMqyd},
+    {'name': 'الحاج عبد الغني المقيد', 'image': abdulghaniMqyd},
+    {'name': 'الحاج ابراهيم المقيد', 'image': ibrahimMqyd},
+    {'name': 'الحاج محمود المقيد', 'image': mahmoudHaj},
+    {'name': 'الحاج حسين المقيد', 'image': husseinMqyd},
+    {'name': 'الشهيد فادي المقيد', 'image': fadiMqyd},
+    {'name': 'أقمارنا', 'image': aqmaruna},
   ];
 
   final List<Map<String, dynamic>> _dailyAyahsList = [

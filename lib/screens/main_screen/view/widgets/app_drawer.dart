@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:murattel_qoraan_app/core/images/images_const.dart';
 import 'package:murattel_qoraan_app/core/routes/app_routes.dart';
 import 'package:murattel_qoraan_app/core/text_app/text_app.dart';
+import 'package:murattel_qoraan_app/core/utils/app_links.dart';
 
 class _DrawerItem {
   final IconData icon;
@@ -77,6 +78,18 @@ class AppDrawer extends StatelessWidget {
         subtitle: 'التلاوات المحفوظة للاستماع دون اتصال',
         onTap: () => Get.toNamed(Routes.downloads),
       ),
+      _DrawerItem(
+        icon: Icons.star_rounded,
+        title: 'قيّم التطبيق',
+        subtitle: 'ادعمنا بتقييمك على متجر Play',
+        onTap: () => rateApp(),
+      ),
+      _DrawerItem(
+        icon: Icons.share_rounded,
+        title: 'شارك التطبيق',
+        subtitle: 'انشر الأجر وشارك التطبيق مع أحبابك',
+        onTap: () => shareApp(),
+      ),
     ];
 
     return Drawer(
@@ -89,10 +102,7 @@ class AppDrawer extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: 28.h, horizontal: 20.w),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    primaryColor,
-                    primaryColor.withValues(alpha: 0.85),
-                  ],
+                  colors: [primaryColor, primaryColor.withValues(alpha: 0.85)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -124,10 +134,7 @@ class AppDrawer extends StatelessWidget {
             ),
             Expanded(
               child: ListView.separated(
-                padding: EdgeInsets.symmetric(
-                  vertical: 12.h,
-                  horizontal: 12.w,
-                ),
+                padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
                 itemCount: items.length,
                 separatorBuilder: (_, _) => SizedBox(height: 6.h),
                 itemBuilder: (context, index) {

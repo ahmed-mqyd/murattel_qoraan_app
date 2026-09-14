@@ -2,7 +2,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// مصدر الصوت للقارئ
 enum ReciterSource {
-  /// آية-بآية من cdn.alquran.cloud (بمعرّف الآية العام في المصحف)
+  /// آية-بآية من cdn.islamic.network (بمعرّف الآية العام في المصحف) —
+  /// نفس بنية alquran.cloud القديمة بعد توقف نطاق cdn.alquran.cloud عن العمل
   alquranCloud,
 
   /// آية-بآية من everyayah.com (بترقيم سورة + آية بثلاث خانات)
@@ -28,12 +29,16 @@ class Reciter {
   /// لقرّاء السورة الكاملة: قالب الرابط ويحتوي {surah} برقم من ثلاث خانات
   final String? surahUrlTemplate;
 
+  /// معدّل البت المتوفر لهذا القارئ على cdn.islamic.network (لقرّاء alquranCloud فقط)
+  final int bitrate;
+
   const Reciter({
     required this.key,
     required this.arabicName,
     required this.audioId,
     required this.source,
     this.surahUrlTemplate,
+    this.bitrate = 128,
   });
 
   bool get isFullSurah => source == ReciterSource.fullSurah;
@@ -63,18 +68,19 @@ class Reciters {
       arabicName: 'عبد الباسط عبد الصمد',
       audioId: 'ar.abdulbasitmurattal',
       source: ReciterSource.alquranCloud,
+      bitrate: 64,
     ),
     Reciter(
       key: 'almuaiqly',
       arabicName: 'ماهر المعيقلي',
-      audioId: 'ar.maheralmuaiqly',
-      source: ReciterSource.alquranCloud,
+      audioId: 'Maher_AlMuaiqly_64kbps',
+      source: ReciterSource.everyAyah,
     ),
     Reciter(
       key: 'ghamdi',
       arabicName: 'سعد الغامدي',
-      audioId: 'ar.saadghamidi',
-      source: ReciterSource.alquranCloud,
+      audioId: 'Ghamadi_40kbps',
+      source: ReciterSource.everyAyah,
     ),
     Reciter(
       key: 'faresabbad',
@@ -121,6 +127,7 @@ class Reciters {
       arabicName: 'عبد الرحمن السديس',
       audioId: 'ar.abdurrahmaansudais',
       source: ReciterSource.alquranCloud,
+      bitrate: 64,
     ),
     Reciter(
       key: 'shaatree',

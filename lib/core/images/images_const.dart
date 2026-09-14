@@ -23,3 +23,15 @@ const String mahmoudMqyd = "assets/photos/mahmoud_mqyd.jpg";
 const String mohamed = "assets/photos/mohamed.jpg";
 
 const String yosefMqyd = "assets/photos/yosef_mqyd.jpg";
+
+const String abdulghaniMqyd = "assets/photos/abdulghani_mqyd.jpg";
+
+const String ibrahimMqyd = "assets/photos/ibrahim_mqyd.jpg";
+
+const String mahmoudHaj = "assets/photos/mahmoud_haj.jpg";
+
+const String husseinMqyd = "assets/photos/hussein_mqyd.jpg";
+
+const String fadiMqyd = "assets/photos/fadi_mqyd.jpg";
+
+const String aqmaruna = "assets/photos/aqmaruna.jpg";

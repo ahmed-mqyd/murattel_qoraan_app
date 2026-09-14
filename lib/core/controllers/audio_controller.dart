@@ -84,12 +84,15 @@ class AudioController extends GetxController {
     int ayahNumberInSurah,
     int globalAyahNumber,
   ) {
-    if (Reciters.byAudioId(reciterId).source == ReciterSource.everyAyah) {
+    final reciter = Reciters.byAudioId(reciterId);
+    if (reciter.source == ReciterSource.everyAyah) {
       final String surahStr = surahId.toString().padLeft(3, '0');
       final String ayahStr = ayahNumberInSurah.toString().padLeft(3, '0');
       return 'https://everyayah.com/data/$reciterId/$surahStr$ayahStr.mp3';
     } else {
-      return 'https://cdn.alquran.cloud/media/audio/ayah/$reciterId/$globalAyahNumber';
+      // cdn.alquran.cloud توقف عن العمل (DNS لم يعد يحلّ)، وبنية التخزين
+      // نفسها متاحة الآن عبر islamic.network بنفس معرّفات القرّاء
+      return 'https://cdn.islamic.network/quran/audio/${reciter.bitrate}/$reciterId/$globalAyahNumber.mp3';
     }
   }
 
